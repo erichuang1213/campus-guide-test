@@ -381,13 +381,13 @@ const waitForBackend = async () => {
 };
 const backend = await waitForBackend();
 const gate = document.createElement('div');
-gate.style.cssText = 'position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:20px;background:rgba(31,41,51,.76)';
+gate.style.cssText = 'position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:20px;background:#fffdf8';
 const panel = document.createElement('section');
 panel.style.cssText = 'width:min(430px,100%);padding:28px;background:#fffdf8;border-radius:18px;box-shadow:0 20px 60px #0005';
 gate.append(panel); document.body.append(gate);
 const message = text => { panel.innerHTML = `<h2 style="margin:0 0 8px">管理後台</h2><p style="color:#667085">${text}</p>`; };
 const showLogin = (note = '請使用管理員帳號登入。') => {
-  panel.innerHTML = `<h2 style="margin:0 0 8px">管理後台登入</h2><p style="color:#667085">${note}</p><form id="cloudLogin" style="display:grid;gap:12px"><label>電子信箱<input id="cloudEmail" type="email" required style="width:100%;padding:10px;margin-top:4px"></label><label>密碼<input id="cloudPassword" type="password" minlength="6" required style="width:100%;padding:10px;margin-top:4px"></label><button class="primary">登入</button><button class="secondary" type="button" id="cloudSignup">第一次使用，建立帳號</button><small id="cloudStatus" style="color:#667085"></small></form>`;
+  panel.innerHTML = `<h2 style="margin:0 0 8px">管理後台登入</h2><p style="color:#667085">${note}</p><form id="cloudLogin" style="display:grid;gap:12px"><label>電子信箱<input id="cloudEmail" type="email" required style="width:100%;padding:10px;margin-top:4px"></label><label>密碼<input id="cloudPassword" type="password" minlength="6" required style="width:100%;padding:10px;margin-top:4px"></label><button class="primary">登入</button><small id="cloudStatus" style="color:#667085"></small></form>`;
   const submit = async create => {
     const email = document.getElementById('cloudEmail').value.trim(), password = document.getElementById('cloudPassword').value;
     const status = document.getElementById('cloudStatus'); status.textContent = create ? '正在建立帳號…' : '正在登入…';
@@ -397,7 +397,6 @@ const showLogin = (note = '請使用管理員帳號登入。') => {
     } catch (error) { status.textContent = error.message || '無法登入，請確認信箱與密碼。'; }
   };
   document.getElementById('cloudLogin').onsubmit = event => { event.preventDefault(); submit(false); };
-  document.getElementById('cloudSignup').onclick = () => submit(true);
 };
 const startAdmin = async () => {
   try {
