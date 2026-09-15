@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>管理店家｜校邊好去處</title>
+  <link href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet">
+  <style>
+    :root{--ink:#1f2933;--muted:#667085;--paper:#fffdf8;--soft:#f7f4ec;--line:#e8e2d7;--brand:#176b5b;--brand2:#e3f2e9;--danger:#b93815}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.55 ui-sans-serif,system-ui,"Noto Sans TC",Arial,sans-serif}.shell{max-width:1080px;margin:auto;padding:0 28px}nav{height:74px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.logo{font-weight:800;font-size:20px}.logo b{color:var(--brand)}a{color:var(--brand);font-weight:700;text-decoration:none}.intro{padding:39px 0 27px}.kicker{color:var(--brand);font-weight:800;font-size:13px}.intro h1{font-size:34px;letter-spacing:-1px;margin:5px 0}.intro p{max-width:680px;color:var(--muted);margin:0}.notice{background:var(--brand2);border-radius:12px;padding:13px 16px;margin:0 0 26px;color:#24594e}.layout{display:grid;grid-template-columns:1.08fr .92fr;gap:24px;align-items:start}.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px}.panel h2{font-size:19px;margin:0 0 4px}.panel .sub{color:var(--muted);margin:0 0 18px;font-size:14px}.list{display:grid;gap:10px}.row{padding:13px;border:1px solid var(--line);border-radius:11px;display:flex;justify-content:space-between;align-items:center;gap:12px}.row strong{display:block}.row small{color:var(--muted)}button{font:inherit;cursor:pointer}.secondary,.delete{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 10px;color:var(--brand);font-weight:700}.delete{color:var(--danger)}.row-actions{display:flex;gap:7px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.full{grid-column:1/-1}label{display:grid;gap:5px;font-weight:700;font-size:14px}input,textarea,select{font:inherit;border:1px solid var(--line);border-radius:8px;padding:9px 10px;background:#fff;color:var(--ink);width:100%}textarea{resize:vertical;min-height:75px}.time-slots{display:grid;gap:8px}.time-slot{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}.time-slot label{font-weight:500}.remove-slot{border:0;background:none;color:var(--danger);padding:9px 2px;font-size:13px}.tags{display:flex;gap:7px;flex-wrap:wrap}.tag-check{display:flex;gap:5px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:6px 9px;font-weight:400}.tag-check input{width:auto;margin:0}.picker-help{color:var(--muted);font-weight:400;font-size:12px}.picker{height:235px;border:1px solid var(--line);border-radius:9px;overflow:hidden}.form-actions{display:flex;gap:10px;margin-top:18px}.primary{border:0;border-radius:8px;padding:10px 14px;background:var(--brand);color:#fff;font-weight:800}.status{font-size:13px;color:var(--brand);margin:12px 0 0;min-height:20px}.utilities{display:flex;gap:12px;margin-top:22px}.utilities button{background:none;border:0;padding:0;color:var(--muted);text-decoration:underline}.empty{color:var(--muted);padding:18px 0}@media(max-width:760px){.shell{padding:0 18px}.layout{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.nav-text{display:none}}
+  </style>
+</head>
+<body>
+<nav class="shell"><div class="logo">校邊<b>好去處</b></div><a href="index.html">← 回到網站首頁</a></nav>
+<main class="shell"><section class="intro"><div class="kicker">內容管理後台</div><h1>維護學生真正會用到的資訊</h1><p>新增店家、標籤、菜單與地圖座標。這些設定只儲存在目前瀏覽器，適合先做內容驗證；正式上線時再改接資料庫與帳號權限。</p></section><div class="notice">目前是本機草案模式：你按下儲存後，首頁重新整理就會讀取新資料。</div><section class="panel" style="margin-bottom:24px"><h2>CSV 批次匯入</h2><p class="sub">欄位：name, category, price, lat, lng, tags, periods, days, desc, menu, image。時段：<code>11:00-14:00|17:00-21:00</code>；標籤以 <code>|</code> 分隔。</p><input id="csvFile" type="file" accept=".csv,text/csv"><div class="form-actions"><button class="primary" type="button" id="importCsv">匯入店家</button><button class="secondary" type="button" id="downloadTemplate">下載範例 CSV</button></div><div class="status" id="importStatus"></div></section>
+<div class="layout"><section class="panel"><h2>已建立的店家</h2><p class="sub" id="count"></p><div class="list" id="list"></div><div class="utilities"><button id="reset">還原示範資料</button><button id="clear">清空所有資料</button></div></section>
+<section class="panel"><h2 id="formTitle">新增店家</h2><p class="sub">帶有 * 的欄位建議優先填寫。</p><form id="form"><input type="hidden" id="editIndex"><div class="form-grid"><label>店家名稱 *<input id="name" required placeholder="例如：巷口麵食館"></label><label>類型／主打 *<input id="category" required placeholder="例如：牛肉麵、乾麵"></label><div class="full"><label>營業日</label><div class="tags" id="dayChoices"></div></div><div class="full"><label>營業時段 <span class="picker-help">可新增午、晚餐等多個時段。</span></label><div class="time-slots" id="timeSlots"></div><button class="secondary" type="button" id="addPeriod">＋ 新增營業時段</button></div><label>價位<input id="price" placeholder="例如：$100–180"></label><label>菜單網址<input id="menu" type="url" placeholder="https://..."></label><label>店家封面圖片網址<input id="image" type="url" placeholder="https://..."></label><label>或上傳圖片<input id="imageFile" type="file" accept="image/*"></label><label>緯度（Latitude）<input id="lat" type="number" step="any" placeholder="例如：25.0330"></label><label>經度（Longitude）<input id="lng" type="number" step="any" placeholder="例如：121.5654"></label><div class="full"><label>在地圖上選擇店家位置 <span class="picker-help">拖曳、縮放後點選店家，座標會自動填入。</span></label><div class="picker" id="pickerMap"></div></div><label class="full">學生提醒／店家介紹<textarea id="desc" placeholder="例如：二樓有插座；12:00–12:40 人潮較多。"></textarea></label><div class="full"><label>標籤</label><div class="tags" id="tagChoices"></div><div class="form-actions"><input id="customTag" placeholder="新增自訂標籤，例如：適合聚餐"><button class="secondary" type="button" id="addTag">新增標籤</button></div></div></div><div class="form-actions"><button class="primary" type="submit">儲存店家</button><button class="secondary" type="button" id="cancel">取消編輯</button></div><div class="status" id="status" aria-live="polite"></div></form></section></div></main>
+<script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
+<script>
+const defaultTags=['麵','飯','早餐','咖啡','甜點','素食','吃正餐','讀書','可內用','外帶','可訂位','有插座','Wi‑Fi','可久坐','平價','快速出餐','晚間','深夜','寵物友善'];let customTags=JSON.parse(localStorage.getItem('campusGuideCustomTags')||'[]');let tags=[...defaultTags,...customTags];
+const seed=[{name:'巷口麵食館',icon:'🍜',tone:'tone-1',distance:'步行 3 分鐘',hours:'營業至 20:30',price:'$90–160',tags:['麵','吃正餐','可內用','平價'],desc:'牛肉麵、乾麵與水餃。中午快但 12:10–12:40 常需要等位。',updated:'2 天前'},{name:'森日咖啡',icon:'☕',tone:'tone-2',distance:'步行 5 分鐘',hours:'營業至 21:00',price:'$100–190',tags:['咖啡','讀書','有插座','可內用'],desc:'二樓安靜、有 Wi‑Fi 和多數座位插座；平日午後適合讀書。',updated:'昨天'},{name:'小碗日食',icon:'🍱',tone:'tone-3',distance:'步行 7 分鐘',hours:'營業至 19:30',price:'$120–190',tags:['飯','吃正餐','可內用','平價'],desc:'定食份量足，一人吃也自在；每日 14:00–17:00 休息。',updated:'4 天前'},{name:'晚安拉麵',icon:'🍥',tone:'tone-4',distance:'步行 9 分鐘',hours:'營業至 23:00',price:'$180–250',tags:['麵','吃正餐','晚間','可內用'],desc:'適合晚上下課後吃的濃郁拉麵；可先線上取號。',updated:'今天'},{name:'日光甜點室',icon:'🍰',tone:'tone-5',distance:'步行 10 分鐘',hours:'營業至 18:00',price:'$110–220',tags:['甜點','咖啡','可內用','讀書'],desc:'採光好、甜點每日更換；週末人多，不建議長時間讀書。',updated:'3 天前'},{name:'阿伯便當',icon:'🥡',tone:'tone-6',distance:'步行 4 分鐘',hours:'營業至 14:00',price:'$75–105',tags:['飯','外帶','平價','吃正餐'],desc:'快速、便宜的午餐選擇。主要外帶，建議 11:30 前到。',updated:'1 週前'}];
+let places=JSON.parse(localStorage.getItem('campusGuidePlaces')||'null')||seed;const $=id=>document.getElementById(id);const weekdays=['日','一','二','三','四','五','六'];function renderDays(selected=[0,1,2,3,4,5,6]){$('dayChoices').innerHTML=weekdays.map((d,i)=>`<label class="tag-check"><input type="checkbox" value="${i}" ${selected.includes(i)?'checked':''}>週${d}</label>`).join('')}renderDays();function renderTagChoices(selected=[]){$('tagChoices').innerHTML=tags.map(t=>`<label class="tag-check"><input type="checkbox" value="${t}" ${selected.includes(t)?'checked':''}>${t}</label>`).join('')}renderTagChoices();$('addTag').onclick=()=>{const tag=$('customTag').value.trim();if(!tag)return;if(tags.includes(tag)){$('status').textContent='這個標籤已經存在。';return}const selected=[...document.querySelectorAll('#tagChoices input:checked')].map(x=>x.value);customTags.push(tag);tags.push(tag);localStorage.setItem('campusGuideCustomTags',JSON.stringify(customTags));renderTagChoices([...selected,tag]);$('customTag').value='';$('status').textContent=`已新增「${tag}」，記得勾選後儲存店家。`};let periods=[{open:'',close:''}],pendingImage='';$('imageFile').onchange=e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{pendingImage=reader.result;$('status').textContent='圖片已載入，儲存店家後會顯示。'};reader.readAsDataURL(file)};const timeValues=Array.from({length:48},(_,i)=>`${String(Math.floor(i/2)).padStart(2,'0')}:${i%2?'30':'00'}`);function timeOptions(value){return `<option value="">選擇時間</option>${timeValues.map(t=>`<option value="${t}" ${t===value?'selected':''}>${t}</option>`).join('')}`}function renderTimeSlots(next=periods){periods=next.length?next:[{open:'',close:''}];$('timeSlots').innerHTML=periods.map((p,i)=>`<div class="time-slot"><label>開始<select class="period-open" data-index="${i}">${timeOptions(p.open||'')}</select></label><label>結束<select class="period-close" data-index="${i}">${timeOptions(p.close||'')}</select></label>${periods.length>1?`<button class="remove-slot" type="button" data-remove="${i}">移除此時段</button>`:'<span></span>'}</div>`).join('');document.querySelectorAll('.period-open').forEach(x=>x.onchange=()=>periods[+x.dataset.index].open=x.value);document.querySelectorAll('.period-close').forEach(x=>x.onchange=()=>periods[+x.dataset.index].close=x.value);document.querySelectorAll('[data-remove]').forEach(x=>x.onclick=()=>renderTimeSlots(periods.filter((_,i)=>i!==+x.dataset.remove)))}$('addPeriod').onclick=()=>renderTimeSlots([...periods,{open:'',close:''}]);renderTimeSlots();let picker,pickerMarker;function setPicker(lng,lat){$('lng').value=lng.toFixed(6);$('lat').value=lat.toFixed(6);if(pickerMarker)pickerMarker.remove();pickerMarker=new maplibregl.Marker({color:'#176b5b'}).setLngLat([lng,lat]).addTo(picker)}function initPicker(){picker=new maplibregl.Map({container:'pickerMap',style:'https://tiles.openfreemap.org/styles/liberty',center:[120.96,23.7],zoom:6.7});picker.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-right');picker.on('click',e=>setPicker(e.lngLat.lng,e.lngLat.lat));}
+function save(){localStorage.setItem('campusGuidePlaces',JSON.stringify(places));renderList()}function renderList(){$('count').textContent=`共 ${places.length} 間店家；首頁會依此清單顯示。`;$('list').innerHTML=places.length?places.map((p,i)=>`<div class="row"><div><strong>${p.icon||'📍'} ${p.name}</strong><small>${p.tags.join('・')||'尚未設定標籤'}${Number.isFinite(p.lat)?'・已設定地圖座標':''}</small></div><div class="row-actions"><button class="secondary" data-edit="${i}">編輯</button><button class="delete" data-delete="${i}">刪除</button></div></div>`).join(''):'<div class="empty">還沒有店家。從右側表單新增第一間吧。</div>';document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>edit(+b.dataset.edit));document.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>{if(confirm(`刪除「${places[+b.dataset.delete].name}」？`)){places.splice(+b.dataset.delete,1);save()}})}
+function clearForm(){$('form').reset();pendingImage='';$('editIndex').value='';$('formTitle').textContent='新增店家';$('status').textContent='';renderTagChoices();renderDays();renderTimeSlots();if(pickerMarker){pickerMarker.remove();pickerMarker=null}}function edit(i){const p=places[i];$('formTitle').textContent=`編輯：${p.name}`;$('editIndex').value=i;['name','price','desc','lat','lng','image'].forEach(k=>$(k).value=p[k]??'');pendingImage='';const oldTimes=(p.hours||'').match(/(\d{1,2}:\d{2})/g)||[],isCloseOnly=(p.hours||'').includes('至');const oldPeriods=p.periods?.length?p.periods:[{open:p.openTime||(isCloseOnly?'':oldTimes[0]||''),close:p.closeTime||(isCloseOnly?oldTimes[0]||'':oldTimes[1]||'')}];renderTimeSlots(oldPeriods);renderDays(p.days||[0,1,2,3,4,5,6]);$('category').value=(p.tags||[]).filter(t=>['麵','飯','早餐','咖啡','甜點','素食'].includes(t)).join('、')||'';$('menu').value=p.menu||'';renderTagChoices(p.tags||[]);if(Number.isFinite(p.lat)&&Number.isFinite(p.lng)){picker.flyTo({center:[p.lng,p.lat],zoom:16});setPicker(p.lng,p.lat)}window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})}
+$('form').onsubmit=e=>{e.preventDefault();const selected=[...document.querySelectorAll('#tagChoices input:checked')].map(x=>x.value);const days=[...document.querySelectorAll('#dayChoices input:checked')].map(x=>Number(x.value));const category=$('category').value.trim().split(/[、，,\s]+/).filter(Boolean);category.forEach(t=>{if(!selected.includes(t))selected.unshift(t)});const idx=$('editIndex').value;const old=idx===''?{}:places[+idx];const savedPeriods=periods.filter(p=>p.open||p.close);const hours=savedPeriods.length?savedPeriods.map(p=>p.open&&p.close?`${p.open}–${p.close}`:p.open?`自 ${p.open}`:`至 ${p.close}`).join('、'):'營業時間待確認';const p={...old,name:$('name').value.trim(),icon:old.icon||'📍',tone:old.tone||'tone-1',hours,periods:savedPeriods,days,image:pendingImage||$('image').value.trim()||old.image||'',price:$('price').value.trim()||'價位待確認',menu:$('menu').value.trim(),lat:$('lat').value===''?undefined:Number($('lat').value),lng:$('lng').value===''?undefined:Number($('lng').value),tags:selected,desc:$('desc').value.trim()||'尚未補充學生提醒。',updated:'剛剛'};if(idx==='')places.unshift(p);else places[+idx]=p;save();clearForm();$('status').textContent='已儲存。回到首頁重新整理，即可看到更新。'};$('cancel').onclick=clearForm;$('reset').onclick=()=>{if(confirm('還原成示範資料？目前內容將被覆蓋。')){places=seed;save();clearForm()}};$('clear').onclick=()=>{if(confirm('確定清空所有店家？')){places=[];save();clearForm()}};initPicker();renderList();
+document.getElementById('downloadTemplate').onclick=()=>{const csv='name,category,price,lat,lng,tags,periods,days,desc,menu,image\n示範麵店,麵,$100-180,25.033,121.565,麵|吃正餐|可內用,11:00-14:00|17:00-21:00,1|2|3|4|5,午休後才有晚餐時段,https://example.com/menu.jpg,https://example.com/shop.jpg';const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='campus-guide-template.csv';a.click()};document.getElementById('importCsv').onclick=()=>{const file=document.getElementById('csvFile').files[0],note=document.getElementById('importStatus');if(!file){note.textContent='請先選擇 CSV 檔案。';return}const reader=new FileReader();reader.onload=()=>{const lines=String(reader.result).trim().split(/\r?\n/),headers=lines.shift().split(',').map(x=>x.trim());let added=0;lines.forEach(line=>{const row=line.split(',');const v=k=>row[headers.indexOf(k)]?.trim()||'';if(!v('name'))return;const periods=v('periods').split('|').filter(Boolean).map(x=>{const [open,close]=x.split('-');return{open,close}});places.unshift({name:v('name'),icon:'📍',tone:'tone-1',price:v('price')||'價位待確認',lat:Number(v('lat')),lng:Number(v('lng')),tags:v('tags').split('|').filter(Boolean),periods,hours:periods.map(x=>`${x.open}–${x.close}`).join('、')||'營業時間待確認',days:v('days').split('|').filter(Boolean).map(Number),desc:v('desc')||'尚未補充學生提醒。',menu:v('menu'),image:v('image'),updated:'剛剛'});added++});save();note.textContent=`已匯入 ${added} 間店家。`};reader.readAsText(file)};
+</script><script>
+// Google Maps Takeout 的「Saved」CSV 匯入：保留原始線索，先送往待審核區，不直接公開。
+const standardCsvPanel = document.getElementById('csvFile').closest('.panel');
+const mapsImportPanel = document.createElement('section');
+mapsImportPanel.className = 'panel';
+mapsImportPanel.style.marginBottom = '24px';
+mapsImportPanel.innerHTML = `
+  <h2>Google Maps 已儲存清單匯入</h2>
+  <p class="sub">從 Google Takeout 匯出的 <strong>Saved</strong> CSV 可直接選取。系統會讀取店名、地址與 Google 地圖連結，並先放入待審核店家，不會直接出現在首頁。</p>
+  <input id="mapsSavedCsv" type="file" accept=".csv,text/csv">
+  <div class="form-actions"><button class="primary" type="button" id="importMapsSaved">匯入為待審核店家</button><a class="secondary" href="candidates.html">查看待審核店家</a></div>
+  <div class="status" id="mapsImportStatus"></div>`;
+standardCsvPanel.after(mapsImportPanel);
+
+function parseCsv(text) {
+  const firstLine = text.split(/\r?\n/, 1)[0] || '';
+  const delimiter = firstLine.includes('\t') ? '\t' : (firstLine.split(';').length > firstLine.split(',').length ? ';' : ',');
+  const rows = []; let row = [], cell = '', quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i], next = text[i + 1];
+    if (char === '"' && quoted && next === '"') { cell += '"'; i++; }
+    else if (char === '"') quoted = !quoted;
+    else if (char === delimiter && !quoted) { row.push(cell); cell = ''; }
+    else if ((char === '\n' || char === '\r') && !quoted) {
+      if (char === '\r' && next === '\n') i++;
+      row.push(cell); if (row.some(value => value.trim())) rows.push(row); row = []; cell = '';
+    } else cell += char;
+  }
+  row.push(cell); if (row.some(value => value.trim())) rows.push(row);
+  return rows;
+}
+function valueFrom(row, headers, names) {
+  const index = headers.findIndex(header => names.includes(header) || names.some(name => header.includes(name)));
+  return index < 0 ? '' : (row[index] || '').trim();
+}
+function coordinatesFromUrl(url) {
+  const match = String(url).match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  return match ? { lat: Number(match[1]), lng: Number(match[2]) } : {};
+}
+document.getElementById('importMapsSaved').onclick = () => {
+  const file = document.getElementById('mapsSavedCsv').files[0];
+  const note = document.getElementById('mapsImportStatus');
+  if (!file) { note.textContent = '請先選擇從 Google Takeout 下載並解壓縮後的 CSV。'; return; }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const rows = parseCsv(String(reader.result).replace(/^\uFEFF/, ''));
+    if (rows.length < 2) { note.textContent = '找不到可匯入的店家資料。請確認選的是 Saved 清單的 CSV。'; return; }
+    const headers = rows.shift().map(header => header.trim().toLowerCase());
+    const candidates = JSON.parse(localStorage.getItem('campusGuideCandidates') || '[]');
+    const known = new Set([...places, ...candidates].map(place => `${place.name || ''}|${place.address || ''}`.toLowerCase()));
+    let added = 0, skipped = 0;
+    rows.forEach((row, index) => {
+      const googleMapsUri = valueFrom(row, headers, ['url', 'google maps url', 'maps url', 'link', '網址', '連結']);
+      const name = valueFrom(row, headers, ['title', 'name', 'place name', 'place', '名稱', '店家名稱', '地點名稱']) || row.find(value => value.trim() && !/^https?:\/\//i.test(value.trim()))?.trim() || '';
+      const address = valueFrom(row, headers, ['address', 'formatted address', 'location', '地址', '地點', 'vicinity']);
+      if (!name) { skipped++; return; }
+      const key = `${name}|${address}`.toLowerCase();
+      if (known.has(key)) { skipped++; return; }
+      known.add(key);
+      candidates.unshift({ id: `saved-${Date.now()}-${index}`, name, category: '待分類', address: address || '地址待確認', googleMapsUri, ...coordinatesFromUrl(googleMapsUri), source: 'Google Maps 已儲存清單' });
+      added++;
+    });
+    localStorage.setItem('campusGuideCandidates', JSON.stringify(candidates));
+    note.textContent = added ? `已匯入 ${added} 間到待審核店家${skipped ? `；略過 ${skipped} 筆空白或重複資料` : ''}。` : `沒有新增店家。偵測到的欄位：${headers.join('、') || '無'}。請確認選的是 Takeout 的 Saved CSV。`;
+  };
+  reader.readAsText(file, 'utf-8');
+};
+</script><script>
+// 管理體驗調整：時段以 15 分鐘為單位，並把菜單圖片與封面圖片分開保存。
+timeValues.splice(0, timeValues.length, ...Array.from({ length: 96 }, (_, index) => `${String(Math.floor(index / 4)).padStart(2, '0')}:${String((index % 4) * 15).padStart(2, '0')}`));
+renderTimeSlots(periods);
+
+const oldEdit = edit;
+edit = function (index) {
+  oldEdit(index);
+  setTimeout(() => document.getElementById('formTitle').scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+};
+
+const oldCsvPanel = document.getElementById('csvFile')?.closest('.panel');
+if (oldCsvPanel) oldCsvPanel.remove();
+
+const menuInput = document.getElementById('menu');
+menuInput.type = 'text';
+menuInput.placeholder = '貼上菜單圖片網址，或在右側上傳圖片';
+menuInput.closest('label').childNodes[0].textContent = '菜單圖片網址';
+const menuUpload = document.createElement('label');
+menuUpload.innerHTML = '或上傳菜單圖片<input id="menuFile" type="file" accept="image/*">';
+menuInput.closest('label').after(menuUpload);
+document.getElementById('menuFile').onchange = event => {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 3 * 1024 * 1024) { document.getElementById('status').textContent = '菜單圖片請小於 3 MB，避免本機資料空間不足。'; event.target.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = () => { menuInput.value = reader.result; document.getElementById('status').textContent = '菜單圖片已載入，儲存店家後會顯示。'; };
+  reader.readAsDataURL(file);
+};
+</script><script>
+// 菜單、封面圖片預覽與封面裁切位置。
+const mediaStyle = document.createElement('style');
+mediaStyle.textContent = '.media-preview{height:125px;border:1px dashed var(--line);border-radius:9px;background:var(--soft) center/cover no-repeat;margin-top:7px;display:grid;place-items:center;color:var(--muted);font-size:13px}.media-preview.menu{background-size:contain}.cover-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}.cover-controls input{width:100%}';
+document.head.appendChild(mediaStyle);
+const menuPreview = document.createElement('div');
+menuPreview.className = 'media-preview menu';
+menuPreview.textContent = '上傳後可在此預覽菜單；儲存後首頁會出現「查看最新菜單」。';
+document.getElementById('menuFile').after(menuPreview);
+const imageInput = document.getElementById('image');
+const coverUpload = document.getElementById('imageFile');
+const coverPreview = document.createElement('div');
+coverPreview.className = 'media-preview';
+coverPreview.textContent = '封面預覽';
+coverUpload.closest('label').after(coverPreview);
+const coverControls = document.createElement('div');
+coverControls.className = 'cover-controls';
+coverControls.innerHTML = '<label>封面水平位置 <input id="coverX" type="range" min="0" max="100" value="50"><small id="coverXValue">50%</small></label><label>封面垂直位置 <input id="coverY" type="range" min="0" max="100" value="50"><small id="coverYValue">50%</small></label>';
+coverPreview.after(coverControls);
+const updateCoverPreview = source => { const x = document.getElementById('coverX').value, y = document.getElementById('coverY').value; document.getElementById('coverXValue').textContent = `${x}%`; document.getElementById('coverYValue').textContent = `${y}%`; coverPreview.style.backgroundImage = source ? `url("${source}")` : ''; coverPreview.style.backgroundPosition = `${x}% ${y}%`; coverPreview.textContent = source ? '' : '封面預覽'; };
+document.getElementById('coverX').oninput = () => updateCoverPreview(imageInput.value || pendingImage);
+document.getElementById('coverY').oninput = () => updateCoverPreview(imageInput.value || pendingImage);
+imageInput.oninput = () => updateCoverPreview(imageInput.value);
+coverUpload.addEventListener('change', event => { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => updateCoverPreview(reader.result); reader.readAsDataURL(file); });
+document.getElementById('menuFile').addEventListener('change', event => { const file = event.target.files[0]; if (!file || file.size > 3 * 1024 * 1024) return; const reader = new FileReader(); reader.onload = () => { menuPreview.style.backgroundImage = `url("${reader.result}")`; menuPreview.textContent = ''; document.getElementById('status').textContent = '菜單已載入預覽；請按「儲存店家」後套用到首頁。'; }; reader.readAsDataURL(file); });
+
+const saveWithCoverPosition = document.getElementById('form').onsubmit;
+document.getElementById('form').onsubmit = event => {
+  const index = document.getElementById('editIndex').value;
+  const coverPosition = { x: Number(document.getElementById('coverX').value), y: Number(document.getElementById('coverY').value) };
+  saveWithCoverPosition(event);
+  const target = index === '' ? places[0] : places[Number(index)];
+  if (target) { target.coverPosition = coverPosition; save(); }
+};
+const editWithCoverPosition = edit;
+edit = index => { editWithCoverPosition(index); const position = places[index].coverPosition || { x: 50, y: 50 }; document.getElementById('coverX').value = position.x; document.getElementById('coverY').value = position.y; updateCoverPreview(places[index].image || ''); const menu = places[index].menu || ''; menuPreview.style.backgroundImage = menu ? `url("${menu}")` : ''; menuPreview.textContent = menu ? '' : '上傳後可在此預覽菜單；儲存後首頁會出現「查看最新菜單」。'; };
+</script><script>
+// 「類型／主打」是獨立欄位，不能只從標籤反推，否則自訂品項會在再次編輯時遺失。
+const formWithCategory = document.getElementById('form').onsubmit;
+document.getElementById('form').onsubmit = event => {
+  const index = document.getElementById('editIndex').value;
+  const category = document.getElementById('category').value.trim();
+  formWithCategory(event);
+  const target = index === '' ? places[0] : places[Number(index)];
+  if (target) { target.category = category; save(); }
+};
+const editWithCategory = edit;
+edit = index => { editWithCategory(index); document.getElementById('category').value = places[index].category || document.getElementById('category').value; };
+</script><script>
+// 文字菜單取代圖片／連結：內容以可讀、可維護的文字保存。
+const legacyMenuField = document.getElementById('menu');
+legacyMenuField.closest('label').style.display = 'none';
+document.getElementById('menuFile').closest('label').style.display = 'none';
+document.querySelector('.media-preview.menu').style.display = 'none';
+const textMenuLabel = document.createElement('label');
+textMenuLabel.className = 'full';
+textMenuLabel.innerHTML = '店家文字菜單 <span class="picker-help">每行一個品項，可寫價格與簡短說明。</span><textarea id="menuText" placeholder="例如：\n牛肉麵　$130\n乾麵　$55\n水餃（10 顆）　$70\n燙青菜　$40"></textarea>';
+legacyMenuField.closest('label').after(textMenuLabel);
+const submitWithTextMenu = document.getElementById('form').onsubmit;
+document.getElementById('form').onsubmit = event => {
+  const index = document.getElementById('editIndex').value;
+  legacyMenuField.value = '';
+  const menuText = document.getElementById('menuText').value.trim();
+  submitWithTextMenu(event);
+  const target = index === '' ? places[0] : places[Number(index)];
+  if (target) { target.menuText = menuText; target.menu = ''; save(); }
+};
+const editWithTextMenu = edit;
+edit = index => { editWithTextMenu(index); document.getElementById('menuText').value = places[index].menuText || ''; };
+</script><script>
+// 此階段不維護菜單，保留舊資料但從管理介面移除。
+document.getElementById('menuText').closest('label').style.display = 'none';
+document.querySelector('.intro p').textContent = '新增店家、標籤、營業資訊與地圖座標。這些設定只儲存在目前瀏覽器，適合先做內容驗證；正式上線時再改接資料庫與帳號權限。';
+</script><script>
+// 指定日期可覆蓋每週固定時段，例如今天臨時休息、明天晚開。
+let specialHours = [];
+const specialSection = document.createElement('div');
+specialSection.className = 'full';
+specialSection.innerHTML = `<label>近期營業例外 <span class="picker-help">優先於每週營業日與時段，用於臨時休息或特殊開店時間。</span></label><div class="form-grid"><label>日期<input id="specialDate" type="date"></label><label>狀態<select id="specialStatus"><option value="open">自訂營業時段</option><option value="closed">全天休息</option></select></label><label class="special-time">開始<select id="specialOpen">${timeOptions('')}</select></label><label class="special-time">結束<select id="specialClose">${timeOptions('')}</select></label></div><div class="form-actions"><button class="secondary" type="button" id="addSpecial">新增／更新此日期</button></div><div class="list" id="specialList"></div>`;
+document.getElementById('addPeriod').closest('.full').after(specialSection);
+const renderSpecialHours = () => {
+  const list = document.getElementById('specialList');
+  list.innerHTML = specialHours.length ? specialHours.sort((a,b) => a.date.localeCompare(b.date)).map((item, index) => `<div class="row"><div><strong>${item.date}</strong><small>${item.closed ? '全天休息' : `${item.open || '未填開始'}–${item.close || '未填結束'}`}</small></div><button class="delete" type="button" data-remove-special="${index}">移除</button></div>`).join('') : '<p class="sub">尚未設定近期例外。</p>';
+  document.querySelectorAll('[data-remove-special]').forEach(button => button.onclick = () => { specialHours.splice(Number(button.dataset.removeSpecial), 1); renderSpecialHours(); });
+};
+const toggleSpecialTimes = () => document.querySelectorAll('.special-time').forEach(label => label.style.display = document.getElementById('specialStatus').value === 'closed' ? 'none' : 'grid');
+document.getElementById('specialStatus').onchange = toggleSpecialTimes;
+document.getElementById('addSpecial').onclick = () => {
+  const date = document.getElementById('specialDate').value;
+  const closed = document.getElementById('specialStatus').value === 'closed';
+  const open = document.getElementById('specialOpen').value, close = document.getElementById('specialClose').value;
+  if (!date) { document.getElementById('status').textContent = '請先選擇例外日期。'; return; }
+  if (!closed && (!open || !close)) { document.getElementById('status').textContent = '請填寫此日期的開始與結束時間，或改選全天休息。'; return; }
+  specialHours = specialHours.filter(item => item.date !== date);
+  specialHours.push({ date, closed, open: closed ? '' : open, close: closed ? '' : close });
+  document.getElementById('specialDate').value = ''; document.getElementById('specialOpen').value = ''; document.getElementById('specialClose').value = ''; renderSpecialHours();
+};
+const submitWithSpecialHours = document.getElementById('form').onsubmit;
+document.getElementById('form').onsubmit = event => {
+  const index = document.getElementById('editIndex').value;
+  const savedSpecialHours = specialHours.map(item => ({ ...item }));
+  submitWithSpecialHours(event);
+  const target = index === '' ? places[0] : places[Number(index)];
+  if (target) { target.specialHours = savedSpecialHours; save(); }
+};
+const editWithSpecialHours = edit;
+edit = index => { editWithSpecialHours(index); specialHours = (places[index].specialHours || []).map(item => ({ ...item })); renderSpecialHours(); };
+const clearWithSpecialHours = clearForm;
+clearForm = () => { clearWithSpecialHours(); specialHours = []; renderSpecialHours(); };
+toggleSpecialTimes(); renderSpecialHours();
+</script><script>
+// 每個星期幾各自設定固定時段，例如週六固定較早開門。
+document.getElementById('dayChoices').closest('.full').style.display = 'none';
+document.getElementById('addPeriod').closest('.full').style.display = 'none';
+let weeklyHours = {};
+const weekdayLabels = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+const initialWeeklyHours = (days = [0,1,2,3,4,5,6], slots = periods) => Object.fromEntries(weekdayLabels.map((_, day) => [day, { enabled: days.includes(day), periods: (slots || []).map(slot => ({ ...slot })) }]));
+const weeklySection = document.createElement('div');
+weeklySection.className = 'full';
+weeklySection.innerHTML = '<label>每週固定營業時段 <span class="picker-help">每一天可各自設定；未勾選代表固定休息。</span></label><div class="list" id="weeklyHoursList"></div>';
+document.getElementById('dayChoices').closest('.full').after(weeklySection);
+const renderWeeklyHours = () => {
+  const list = document.getElementById('weeklyHoursList');
+  list.innerHTML = weekdayLabels.map((label, day) => {
+    const item = weeklyHours[day] || { enabled: false, periods: [] };
+    const slots = item.periods.length ? item.periods : [{ open: '', close: '' }];
+    return `<div class="row" style="display:block"><label class="tag-check"><input type="checkbox" data-weekday-enabled="${day}" ${item.enabled ? 'checked' : ''}>${label}營業</label><div data-weekday-slots="${day}" style="display:${item.enabled ? 'grid' : 'none'};gap:8px;margin-top:8px">${slots.map((slot, index) => `<div class="time-slot"><label>開始<select data-weekday-open="${day}" data-slot="${index}">${timeOptions(slot.open || '')}</select></label><label>結束<select data-weekday-close="${day}" data-slot="${index}">${timeOptions(slot.close || '')}</select></label>${slots.length > 1 ? `<button class="remove-slot" type="button" data-weekday-remove="${day}" data-slot="${index}">移除此時段</button>` : '<span></span>'}</div>`).join('')}<button class="secondary" type="button" data-weekday-add="${day}">＋ 新增時段</button></div></div>`;
+  }).join('');
+  document.querySelectorAll('[data-weekday-enabled]').forEach(input => input.onchange = () => { const day = Number(input.dataset.weekdayEnabled); weeklyHours[day].enabled = input.checked; if (!weeklyHours[day].periods.length) weeklyHours[day].periods = [{ open: '', close: '' }]; renderWeeklyHours(); });
+  document.querySelectorAll('[data-weekday-open]').forEach(select => select.onchange = () => weeklyHours[Number(select.dataset.weekdayOpen)].periods[Number(select.dataset.slot)].open = select.value);
+  document.querySelectorAll('[data-weekday-close]').forEach(select => select.onchange = () => weeklyHours[Number(select.dataset.weekdayClose)].periods[Number(select.dataset.slot)].close = select.value);
+  document.querySelectorAll('[data-weekday-add]').forEach(button => button.onclick = () => { const day = Number(button.dataset.weekdayAdd); weeklyHours[day].periods.push({ open: '', close: '' }); renderWeeklyHours(); });
+  document.querySelectorAll('[data-weekday-remove]').forEach(button => button.onclick = () => { const day = Number(button.dataset.weekdayRemove); weeklyHours[day].periods.splice(Number(button.dataset.slot), 1); renderWeeklyHours(); });
+};
+weeklyHours = initialWeeklyHours(); renderWeeklyHours();
+const submitWithWeeklyHours = document.getElementById('form').onsubmit;
+document.getElementById('form').onsubmit = event => {
+  const index = document.getElementById('editIndex').value;
+  const savedWeeklyHours = Object.fromEntries(Object.entries(weeklyHours).map(([day, item]) => [day, { enabled: item.enabled, periods: item.periods.filter(slot => slot.open || slot.close).map(slot => ({ ...slot })) }]));
+  submitWithWeeklyHours(event);
+  const target = index === '' ? places[0] : places[Number(index)];
+  if (target) {
+    target.weeklyHours = savedWeeklyHours;
+    target.days = Object.keys(savedWeeklyHours).filter(day => savedWeeklyHours[day].enabled).map(Number);
+    const first = Object.values(savedWeeklyHours).find(item => item.enabled && item.periods.length);
+    target.periods = first?.periods || [];
+    target.hours = '依星期設定';
+    save();
+  }
+};
+const editWithWeeklyHours = edit;
+edit = index => { editWithWeeklyHours(index); const place = places[index]; weeklyHours = place.weeklyHours ? Object.fromEntries(weekdayLabels.map((_, day) => [day, { enabled: Boolean(place.weeklyHours[day]?.enabled), periods: (place.weeklyHours[day]?.periods || []).map(slot => ({ ...slot })) }])) : initialWeeklyHours(place.days || [], place.periods || []); renderWeeklyHours(); };
+const clearWithWeeklyHours = clearForm;
+clearForm = () => { clearWithWeeklyHours(); weeklyHours = initialWeeklyHours(); renderWeeklyHours(); };
+</script><script>
+// 恢復簡潔的共用時段，再用額外週別時段處理週六等不同規則。
+// 舊版逐日／日期例外的介面僅隱藏，不移除；舊資料的相容程式仍能正常運作。
+weeklySection.style.display = 'none';
+specialSection.style.display = 'none';
+document.getElementById('dayChoices').closest('.full').style.display = '';
+document.getElementById('addPeriod').closest('.full').style.display = '';
+let weeklySchedules = [];
+const extraWeeklySection = document.createElement('div');
+extraWeeklySection.className = 'full';
+extraWeeklySection.innerHTML = '<label>另外的每週營業時段 <span class="picker-help">只有某幾天時段不同時再新增，例如週六較早開門。</span></label><div class="list" id="extraWeeklyList"></div><button class="secondary" type="button" id="addExtraWeekly">＋ 新增另一組每週時段</button>';
+document.getElementById('addPeriod').closest('.full').after(extraWeeklySection);
+const renderExtraWeekly = () => {
+  const list = document.getElementById('extraWeeklyList');
+  // 此舊版清單已由「每週特殊時段」介面取代；切換店家時不應中斷後續載入。
+  if (!list) return;
+  list.innerHTML = weeklySchedules.map((schedule, group) => `<div class="region"><div class="tags">${weekdays.map((day, index) => `<label class="tag-check"><input type="checkbox" data-extra-day="${group}" value="${index}" ${schedule.days.includes(index) ? 'checked' : ''}>週${day}</label>`).join('')}</div><div class="time-slots">${schedule.periods.map((slot, index) => `<div class="time-slot"><label>開始<select data-extra-open="${group}" data-slot="${index}">${timeOptions(slot.open || '')}</select></label><label>結束<select data-extra-close="${group}" data-slot="${index}">${timeOptions(slot.close || '')}</select></label>${schedule.periods.length > 1 ? `<button class="remove-slot" type="button" data-extra-remove-slot="${group}" data-slot="${index}">移除時段</button>` : '<span></span>'}</div>`).join('')}</div><div class="form-actions"><button class="secondary" type="button" data-extra-add-slot="${group}">＋ 新增時段</button><button class="delete" type="button" data-extra-remove-group="${group}">移除此組</button></div></div>`).join('') || '<p class="sub">尚未新增其他時段。</p>';
+  document.querySelectorAll('[data-extra-day]').forEach(input => input.onchange = () => { const group = Number(input.dataset.extraDay), day = Number(input.value); weeklySchedules[group].days = [...document.querySelectorAll(`[data-extra-day="${group}"]:checked`)].map(box => Number(box.value)); });
+  document.querySelectorAll('[data-extra-open]').forEach(select => select.onchange = () => weeklySchedules[Number(select.dataset.extraOpen)].periods[Number(select.dataset.slot)].open = select.value);
+  document.querySelectorAll('[data-extra-close]').forEach(select => select.onchange = () => weeklySchedules[Number(select.dataset.extraClose)].periods[Number(select.dataset.slot)].close = select.value);
+  document.querySelectorAll('[data-extra-add-slot]').forEach(button => button.onclick = () => { weeklySchedules[Number(button.dataset.extraAddSlot)].periods.push({ open: '', close: '' }); renderExtraWeekly(); });
+  document.querySelectorAll('[data-extra-remove-slot]').forEach(button => button.onclick = () => { const group = Number(button.dataset.extraRemoveSlot); weeklySchedules[group].periods.splice(Number(button.dataset.slot), 1); renderExtraWeekly(); });
+  document.querySelectorAll('[data-extra-remove-group]').forEach(button => button.onclick = () => { weeklySchedules.splice(Number(button.dataset.extraRemoveGroup), 1); renderExtraWeekly(); });
+};
+document.getElementById('addExtraWeekly').onclick = () => { weeklySchedules.push({ days: [], periods: [{ open: '', close: '' }] }); renderExtraWeekly(); };
+const submitWithExtraWeekly = document.getElementById('form').onsubmit;
+document.getElementById('form').onsubmit = event => {
+  const index = document.getElementById('editIndex').value;
+  const baseDays = [...document.querySelectorAll('#dayChoices input:checked')].map(input => Number(input.value));
+  const basePeriods = periods.filter(slot => slot.open || slot.close).map(slot => ({ ...slot }));
+  const savedExtra = weeklySchedules.filter(schedule => schedule.days.length).map(schedule => ({ days: [...schedule.days], periods: schedule.periods.filter(slot => slot.open || slot.close).map(slot => ({ ...slot })) }));
+  submitWithExtraWeekly(event);
+  const target = index === '' ? places[0] : places[Number(index)];
+  if (target) { target.days = baseDays; target.periods = basePeriods; target.weeklySchedules = savedExtra; target.weeklyHours = undefined; target.hours = '依星期設定'; save(); }
+};
+const editWithExtraWeekly = edit;
+edit = index => { editWithExtraWeekly(index); const place = places[index]; weeklySchedules = (place.weeklySchedules || []).map(schedule => ({ days: [...schedule.days], periods: schedule.periods.map(slot => ({ ...slot })) })); renderExtraWeekly(); };
+const clearWithExtraWeekly = clearForm;
+clearForm = () => { clearWithExtraWeekly(); weeklySchedules = []; renderExtraWeekly(); };
+renderExtraWeekly();
+</script><script>
+// 確保原本的「營業日」與「營業時段」一定顯示在表單內。
+const baseDaysBlock = document.getElementById('dayChoices').closest('.full');
+const baseTimesBlock = document.getElementById('addPeriod').closest('.full');
+baseDaysBlock.style.setProperty('display', 'block', 'important');
+baseTimesBlock.style.setProperty('display', 'block', 'important');
+</script><script>
+// 一般時段 + 少數星期覆蓋規則：特殊時段會取代該星期的通常時段。
+extraWeeklySection.style.display = 'block';
+extraWeeklySection.innerHTML = `<label>每週特殊時段 <span class="picker-help">選少數時段不同的星期，例如週六較早開門。這會取代上方的一般時段。</span></label><div class="region"><div class="tags" id="overrideDays">${weekdays.map((day, index) => `<label class="tag-check"><input type="checkbox" value="${index}">週${day}</label>`).join('')}</div><div class="time-slot" style="margin-top:10px"><label>開始<select id="overrideOpen">${timeOptions('')}</select></label><label>結束<select id="overrideClose">${timeOptions('')}</select></label><span></span></div><button class="secondary" type="button" id="addWeeklyOverride">＋ 新增每週特殊時段</button></div><div class="list" id="overrideList"></div>`;
+let weeklyOverrides = [];
+const renderWeeklyOverrides = () => {
+  const list = document.getElementById('overrideList');
+  list.innerHTML = weeklyOverrides.length ? weeklyOverrides.map((rule, index) => `<div class="row"><div><strong>${rule.days.map(day => `週${weekdays[day]}`).join('、')}</strong><small>${rule.open}–${rule.close}・取代一般時段</small></div><button class="delete" type="button" data-delete-override="${index}">移除</button></div>`).join('') : '<p class="sub">尚未新增每週特殊時段。</p>';
+  document.querySelectorAll('[data-delete-override]').forEach(button => button.onclick = () => { weeklyOverrides.splice(Number(button.dataset.deleteOverride), 1); persistWeeklyOverrides(); renderWeeklyOverrides(); });
+};
+const persistWeeklyOverrides = () => {
+  const index = document.getElementById('editIndex').value;
+  if (index === '') return false;
+  const place = places[Number(index)];
+  if (!place) return false;
+  place.weeklySchedules = weeklyOverrides.map(rule => ({ days: [...rule.days], periods: [{ open: rule.open, close: rule.close }] }));
+  save();
+  document.getElementById('status').textContent = '每週特殊時段已儲存；首頁重新整理後會依今天星期自動顯示。';
+  return true;
+};
+document.getElementById('addWeeklyOverride').onclick = () => {
+  const days = [...document.querySelectorAll('#overrideDays input:checked')].map(input => Number(input.value));
+  const open = document.getElementById('overrideOpen').value, close = document.getElementById('overrideClose').value;
+  if (!days.length || !open || !close) { document.getElementById('status').textContent = '請勾選適用的星期，並填寫開始與結束時間。'; return; }
+  weeklyOverrides.push({ days, open, close });
+  document.querySelectorAll('#overrideDays input').forEach(input => input.checked = false);
+  document.getElementById('overrideOpen').value = ''; document.getElementById('overrideClose').value = '';
+  const persisted = persistWeeklyOverrides();
+  if (!persisted) document.getElementById('status').textContent = '特殊時段已加入；新增店家請再按最下方的「儲存店家」。';
+  renderWeeklyOverrides();
+};
+const submitWithWeeklyOverrides = document.getElementById('form').onsubmit;
+document.getElementById('form').onsubmit = event => {
+  const index = document.getElementById('editIndex').value;
+  const savedOverrides = weeklyOverrides.map(rule => ({ days: [...rule.days], periods: [{ open: rule.open, close: rule.close }] }));
+  submitWithWeeklyOverrides(event);
+  const target = index === '' ? places[0] : places[Number(index)];
+  if (target) { target.weeklySchedules = savedOverrides; save(); }
+};
+const editWithWeeklyOverrides = edit;
+edit = index => { editWithWeeklyOverrides(index); weeklyOverrides = (places[index].weeklySchedules || []).flatMap(rule => (rule.periods || []).map(period => ({ days: [...rule.days], open: period.open, close: period.close }))); renderWeeklyOverrides(); };
+const clearWithWeeklyOverrides = clearForm;
+clearForm = () => { clearWithWeeklyOverrides(); weeklyOverrides = []; renderWeeklyOverrides(); };
+renderWeeklyOverrides();
+</script></body></html>

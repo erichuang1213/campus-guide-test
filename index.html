@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>校邊好去處｜網站草案</title>
+  <link href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet">
+  <style>
+    :root{--ink:#1f2933;--muted:#667085;--paper:#fffdf8;--soft:#f7f4ec;--line:#e8e2d7;--brand:#176b5b;--brand2:#e3f2e9;--orange:#e97838;--shadow:0 16px 36px rgba(49,41,28,.10)}
+    *{box-sizing:border-box} body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.55 ui-sans-serif,system-ui,"Noto Sans TC",Arial,sans-serif}.shell{max-width:1180px;margin:auto;padding:0 28px}
+    nav{height:74px;display:flex;align-items:center;justify-content:space-between}.logo{font-weight:800;font-size:20px;letter-spacing:-.5px}.logo b{color:var(--brand)}.nav-right{display:flex;gap:19px;align-items:center;color:var(--muted);font-size:14px}.location{border:1px solid var(--line);background:#fff;padding:9px 13px;border-radius:999px;color:var(--ink)}
+    .hero{padding:52px 0 42px;background:linear-gradient(118deg,#f1f6ee 0%,#fff9ee 58%,#fffdf8 100%);border-top:1px solid #f3eee3}.menu-toggle{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;font-size:18px;cursor:pointer}.drawer{position:absolute;right:28px;top:64px;z-index:10;width:220px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:12px}.drawer nav{height:auto;display:grid;gap:3px}.drawer a{padding:10px;border-radius:8px;color:var(--ink);text-decoration:none}.drawer a:hover{background:var(--soft)}.hero-grid{display:grid;grid-template-columns:1.12fr .88fr;gap:54px;align-items:center}.eyebrow{display:inline-flex;gap:8px;align-items:center;background:var(--brand2);color:var(--brand);border-radius:999px;padding:6px 11px;font-size:13px;font-weight:700}.dot{width:7px;height:7px;border-radius:50%;background:var(--brand)}h1{font-size:clamp(34px,4vw,55px);line-height:1.13;letter-spacing:-2px;margin:14px 0 15px}h1 em{font-style:normal;color:var(--brand)}.lead{color:var(--muted);font-size:17px;max-width:540px;margin:0 0 25px}
+    .search{background:#fff;border:1px solid var(--line);padding:7px 8px 7px 17px;border-radius:14px;box-shadow:0 9px 23px rgba(66,55,36,.08);display:flex;align-items:center;gap:8px}.search input{border:0;outline:0;font:inherit;width:100%;min-width:0;padding:8px 0;color:var(--ink)}.search button{border:0;background:var(--brand);color:#fff;border-radius:10px;padding:11px 17px;font:inherit;font-weight:700;cursor:pointer}.hint{display:flex;gap:8px;align-items:center;margin:13px 0 0;color:var(--muted);font-size:13px}.hint span{color:var(--orange);font-size:16px}
+    .mini-map{height:310px;background:#eef1ed;border:1px solid var(--line);border-radius:20px;position:relative;overflow:hidden;box-shadow:var(--shadow)}#realMap{height:100%;width:100%}.map-label{position:absolute;z-index:3;top:17px;left:17px;font-weight:800;background:#fff;padding:8px 11px;border-radius:9px;box-shadow:0 4px 12px rgba(0,0,0,.08)}.map-label small{display:block;color:var(--muted);font-weight:400}.map-actions{position:absolute;z-index:3;left:17px;bottom:17px;display:flex;gap:8px}.map-actions button{border:0;border-radius:8px;background:var(--brand);color:#fff;padding:8px 10px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}.map-actions button+button{background:#fff;color:var(--brand);border:1px solid var(--line)}.map-note{position:absolute;right:14px;bottom:14px;z-index:3;background:#fff;padding:7px 10px;border-radius:9px;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,.08)}.place-marker{width:28px;height:28px;border-radius:50% 50% 50% 0;background:#df3e3e;display:grid;place-items:center;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.24)}.place-marker:after{content:"";width:9px;height:9px;border-radius:50%;background:#fff}.place-marker span{display:none}.user-marker{width:17px;height:17px;border-radius:50%;background:#176b5b;border:3px solid #fff;box-shadow:0 1px 8px rgba(0,0,0,.35)}
+    main{padding:40px 0 72px}.section-head{display:flex;justify-content:space-between;align-items:end;gap:14px;margin-bottom:18px}.section-head h2{font-size:25px;letter-spacing:-.7px;margin:0}.section-head p{margin:3px 0 0;color:var(--muted)}.link{border:0;background:none;color:var(--brand);font:inherit;font-weight:700;cursor:pointer}.filters{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:25px}.chip{border:1px solid var(--line);border-radius:999px;padding:8px 13px;background:#fff;color:#46505b;font:inherit;cursor:pointer}.chip:hover,.chip.active{background:var(--brand);border-color:var(--brand);color:#fff}.result-line{margin:-7px 0 17px;color:var(--muted);font-size:14px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.place{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;transition:.2s box-shadow,.2s transform}.place:hover{transform:translateY(-3px);box-shadow:var(--shadow)}.visual{height:120px;padding:16px;display:flex;align-items:end;font-size:38px}.tone-1{background:linear-gradient(130deg,#dfeee5,#f6ddbc)}.tone-2{background:linear-gradient(130deg,#f6d4c3,#f8ecce)}.tone-3{background:linear-gradient(130deg,#d8e7ef,#e7ecd2)}.tone-4{background:linear-gradient(130deg,#ead9ef,#f7e4cf)}.tone-5{background:linear-gradient(130deg,#ffe8bd,#dceddc)}.tone-6{background:linear-gradient(130deg,#d9ebe6,#dfe1f1)}.place-body{padding:15px}.place-top{display:flex;justify-content:space-between;gap:8px;align-items:start}.place h3{margin:0;font-size:18px;letter-spacing:-.3px}.open{font-size:12px;color:var(--brand);background:var(--brand2);padding:3px 7px;border-radius:5px;white-space:nowrap}.place-meta{color:var(--muted);font-size:13px;margin:5px 0 11px}.tags{display:flex;gap:6px;flex-wrap:wrap}.tag{font-size:12px;background:var(--soft);color:#58534a;border-radius:5px;padding:4px 7px}.detail{border:0;border-top:1px solid var(--line);background:#fff;width:100%;text-align:left;padding:11px 15px;color:var(--brand);font:inherit;font-weight:700;cursor:pointer}
+    .empty{grid-column:1/-1;padding:35px;text-align:center;background:var(--soft);border-radius:14px;color:var(--muted)}.how{background:#f2f7f2;padding:35px;border-radius:20px;margin-top:52px}.how h2{margin:0 0 20px;font-size:23px}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}.step-num{display:inline-grid;place-items:center;width:29px;height:29px;border-radius:50%;background:var(--brand);color:#fff;font-weight:800}.step h3{font-size:16px;margin:9px 0 3px}.step p{margin:0;color:var(--muted)}.feedback{margin-top:38px;padding:30px;background:#fff;border:1px solid var(--line);border-radius:20px}.feedback h2{margin:0;font-size:22px}.feedback p{color:var(--muted);margin:4px 0 18px}.feedback-form{display:grid;grid-template-columns:210px 1fr auto;gap:10px;align-items:start}.feedback select,.feedback textarea{font:inherit;border:1px solid var(--line);border-radius:9px;padding:10px;background:#fff;color:var(--ink);width:100%}.feedback textarea{min-height:44px;resize:vertical}.feedback button{border:0;background:var(--brand);color:#fff;border-radius:9px;padding:10px 15px;font:inherit;font-weight:700;cursor:pointer}.feedback-status{grid-column:1/-1;color:var(--brand);font-size:13px;min-height:18px}
+    dialog{border:0;border-radius:18px;padding:0;max-width:520px;width:calc(100% - 30px);box-shadow:0 25px 65px rgba(0,0,0,.25)}dialog::backdrop{background:rgba(20,29,26,.42)}.dialog-body{padding:27px}.close{float:right;border:0;background:var(--soft);width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer}.dialog-body h2{margin:8px 0 2px}.detail-info{color:var(--muted);margin:0 0 19px}.info-block{border-top:1px solid var(--line);padding:14px 0}.info-block strong{display:block;margin-bottom:4px}.notice{margin-top:16px;color:var(--muted);font-size:13px}.notice button{border:0;color:var(--brand);background:none;padding:0;font:inherit;font-weight:700;cursor:pointer}
+    @media(max-width:760px){.shell{padding:0 18px}.nav-right>a{display:none}.hero{padding:34px 0}.hero-grid{grid-template-columns:1fr;gap:30px}.mini-map{min-height:215px}.grid,.steps,.feedback-form{grid-template-columns:1fr}.section-head{align-items:start;flex-direction:column}.nav-right{gap:8px}.location{font-size:12px;padding:8px}.how{padding:25px 20px}h1{letter-spacing:-1.3px}}
+  </style>
+</head>
+<body>
+  <nav class="shell"><div class="logo">校邊<b>好去處</b></div><div class="nav-right"><button class="location" id="locate">⌖ 使用目前位置</button><button class="menu-toggle" id="menuToggle" aria-label="開啟功能選單">☰</button></div></nav><aside class="drawer" id="drawer" hidden><nav><a href="#realMap">附近探索</a><a href="#places">所有店家</a><a href="#feedbackForm">提交回饋</a><a href="admin.html">管理店家</a><a href="regions.html">生活圈管理</a><a href="candidates.html">待審核店家</a><a href="feedback.html">回饋管理</a></nav></aside>
+  <section class="hero"><div class="shell hero-grid"><div><div class="eyebrow"><i class="dot"></i>探索你所在的生活圈</div><h1>今天想去哪？<br>附近的<em>好選擇</em>在這裡。</h1><p class="lead">移動地圖探索車站、商圈或住宅區；找一間能讀書的咖啡廳、一碗熱麵，或現在還能內用的餐廳。</p><form class="search" id="searchForm"><span aria-hidden="true">⌕</span><input id="search" placeholder="試試看：麵、咖啡、安靜、有插座" autocomplete="off"><button>搜尋</button></form><div class="hint"><span>✦</span>店家資訊由學生近期確認，會標註最後更新時間。</div></div><div class="mini-map" aria-label="可互動的開源地圖"><div id="realMap"></div><div class="map-label">生活圈地圖<small id="area">移動地圖後，探索目前區域</small></div><div class="map-actions"><button id="exploreArea">探索目前區域</button><button id="clearArea" hidden>顯示所有區域</button></div><div class="map-note" id="mapNote">尚未選擇探索區域</div></div></div></section>
+  <main class="shell"><div class="section-head"><div><h2 id="listingTitle">你附近的推薦</h2><p>依距離、目前營業狀態和學生近期回報排列</p></div><button class="link" id="reset">清除篩選</button></div><div class="filters" aria-label="快速篩選"><button class="chip active" data-filter="all">全部</button><button class="chip" data-filter="吃正餐">吃正餐</button><button class="chip" data-filter="讀書">讀書</button><button class="chip" data-filter="可內用">可內用</button><button class="chip" data-filter="麵">想吃麵</button><button class="chip" data-filter="平價">平價</button><button class="chip" data-filter="晚間">晚間還開</button></div><div class="result-line" id="resultLine">顯示 6 個距離你步行 12 分鐘內的地點</div><section class="grid" id="places" aria-live="polite"></section>
+    <section class="how"><h2>新生只需三步，就能少踩一點雷</h2><div class="steps"><div class="step"><span class="step-num">1</span><h3>告訴我們你在哪裡</h3><p>使用目前位置，或手動選擇校門、宿舍等地標。</p></div><div class="step"><span class="step-num">2</span><h3>輸入需求或選標籤</h3><p>從「麵」到「安靜、有插座」，都能找到對應選項。</p></div><div class="step"><span class="step-num">3</span><h3>用近期資訊做決定</h3><p>先確認內用、菜單、營業狀態，再安心出發。</p></div></div></section>
+    <section class="feedback"><h2>幫我們把校邊資訊做得更好</h2><p>發現資料有誤、想推薦新店家，或有功能建議？歡迎告訴我們。</p><form class="feedback-form" id="feedbackForm"><select id="feedbackType" aria-label="回饋類型"><option>回報店家資訊有誤</option><option>推薦新增店家</option><option>提出功能建議</option><option>其他回饋</option></select><textarea id="feedbackText" required placeholder="請描述你想回報的內容，例如店家已改成只外帶。"></textarea><button>送出回饋</button><span class="feedback-status" id="feedbackStatus" aria-live="polite"></span></form></section>
+  </main>
+  <dialog id="detailDialog"><div class="dialog-body"><button class="close" aria-label="關閉">×</button><div id="dialogContent"></div></div></dialog><dialog id="menuDialog"><div class="dialog-body" style="max-width:900px"><button class="close-menu close" aria-label="關閉">×</button><h2>店家菜單</h2><div style="display:flex;gap:8px;margin-bottom:12px"><button class="menu-zoom" data-zoom="-">縮小</button><button class="menu-zoom" data-zoom="reset">原尺寸</button><button class="menu-zoom" data-zoom="+">放大</button></div><div style="max-height:70vh;overflow:auto;border:1px solid var(--line)"><img id="menuImage" alt="店家菜單" style="display:block;max-width:none;transform-origin:top left"></div></div></dialog>
+  <script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
+  <script>
+    const seedPlaces=[
+      {name:'巷口麵食館',icon:'🍜',tone:'tone-1',distance:'步行 3 分鐘',hours:'營業至 20:30',price:'$90–160',tags:['麵','吃正餐','可內用','平價'],desc:'牛肉麵、乾麵與水餃。中午快但 12:10–12:40 常需要等位。',updated:'2 天前'},
+      {name:'森日咖啡',icon:'☕',tone:'tone-2',distance:'步行 5 分鐘',hours:'營業至 21:00',price:'$100–190',tags:['咖啡','讀書','有插座','可內用'],desc:'二樓安靜、有 Wi‑Fi 和多數座位插座；平日午後適合讀書。',updated:'昨天'},
+      {name:'小碗日食',icon:'🍱',tone:'tone-3',distance:'步行 7 分鐘',hours:'營業至 19:30',price:'$120–190',tags:['飯','吃正餐','可內用','平價'],desc:'定食份量足，一人吃也自在；每日 14:00–17:00 休息。',updated:'4 天前'},
+      {name:'晚安拉麵',icon:'🍥',tone:'tone-4',distance:'步行 9 分鐘',hours:'營業至 23:00',price:'$180–250',tags:['麵','吃正餐','晚間','可內用'],desc:'適合晚上下課後吃的濃郁拉麵；可先線上取號。',updated:'今天'},
+      {name:'日光甜點室',icon:'🍰',tone:'tone-5',distance:'步行 10 分鐘',hours:'營業至 18:00',price:'$110–220',tags:['甜點','咖啡','可內用','讀書'],desc:'採光好、甜點每日更換；週末人多，不建議長時間讀書。',updated:'3 天前'},
+      {name:'阿伯便當',icon:'🥡',tone:'tone-6',distance:'步行 4 分鐘',hours:'營業至 14:00',price:'$75–105',tags:['飯','外帶','平價','吃正餐'],desc:'快速、便宜的午餐選擇。主要外帶，建議 11:30 前到。',updated:'1 週前'}
+    ];
+    const places=JSON.parse(localStorage.getItem('campusGuidePlaces')||'null')||seedPlaces;
+    const grid=document.getElementById('places'), input=document.getElementById('search'), line=document.getElementById('resultLine'), title=document.getElementById('listingTitle');let filter='all',activePlaces=[];let map,mapMarkers=[],userMarker;
+    function kmTo(p){if(!window.userLocation||!Number.isFinite(p.lat)||!Number.isFinite(p.lng))return null;const r=Math.PI/180,a=window.userLocation.lat*r,b=p.lat*r,dLat=(p.lat-window.userLocation.lat)*r,dLng=(p.lng-window.userLocation.lng)*r;const h=Math.sin(dLat/2)**2+Math.cos(a)*Math.cos(b)*Math.sin(dLng/2)**2;return 6371*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));}function distanceText(p){if(!Number.isFinite(p.lat)||!Number.isFinite(p.lng))return '尚未設定店家座標';if(!window.userLocation)return '定位後自動計算距離';const km=kmTo(p);return km<1?`距離約 ${Math.round(km*1000)} 公尺`:`距離約 ${km.toFixed(1)} 公里`}function safeMenuUrl(p){try{const u=new URL(p.menu);return ['http:','https:'].includes(u.protocol)?u.href:''}catch{return ''}}function statusOf(p){const now=new Date(),mins=now.getHours()*60+now.getMinutes();if(p.days?.length&&!p.days.includes(now.getDay()))return '今日休息';const slots=p.periods||[];if(!slots.length)return '時間待確認';return slots.some(s=>{const a=s.open?.split(':').reduce((x,v)=>x*60+Number(v),0),b=s.close?.split(':').reduce((x,v)=>x*60+Number(v),0);return Number.isFinite(a)&&Number.isFinite(b)&&mins>=a&&mins<b})?'營業中':'休息中'}
+    function render(){const q=input.value.trim().toLowerCase(),side=[...document.querySelectorAll('[data-side]:checked')].map(x=>x.value);const result=places.filter(p=>(filter==='all'||p.tags.includes(filter))&&side.every(t=>p.tags.includes(t))&&(!q||[p.name,p.desc,...p.tags].join(' ').toLowerCase().includes(q))).sort((a,b)=>(kmTo(a)??Infinity)-(kmTo(b)??Infinity));activePlaces=result;title.textContent=q?`「${input.value.trim()}」的搜尋結果`:(filter==='all'?'你附近的推薦':`${filter}的推薦`);line.textContent=result.length?(window.userLocation?'已依你目前位置的直線距離排序':'找到 '+result.length+' 個符合條件的地點・定位後可自動計算距離'):'目前找不到完全符合的地點，試試較短的關鍵字。';grid.innerHTML=result.length?result.map((p,i)=>{const menu=safeMenuUrl(p);return `<article class="place"><div class="visual ${p.tone}" ${p.image?`style="background-image:url('${p.image}')"`:''}>${p.image?'':p.icon}</div><div class="place-body"><div class="place-top"><h3>${p.name}</h3><span class="open">${statusOf(p)}</span></div><div class="place-meta">${distanceText(p)}・${p.hours}・${p.price}</div><div class="tags">${p.tags.slice(0,4).map(t=>`<span class="tag">${t}</span>`).join('')}</div>${menu?`<p style="margin:10px 0 0"><button class="menu-preview" data-menu="${menu}">查看最新菜單 ↗</button></p>`:''}</div><button class="detail" data-index="${places.indexOf(p)}">查看近期資訊與菜單 →</button></article>`}).join(''):'<div class="empty">沒有符合的店家。你可以改搜尋「飯」、「咖啡」或清除篩選。</div>';document.querySelectorAll('.detail').forEach(b=>b.onclick=()=>showDetail(places[b.dataset.index]));document.querySelectorAll('.menu-preview').forEach(b=>b.onclick=()=>openMenu(b.dataset.menu));syncMarkers();}
+    document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filter=c.dataset.filter;document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('active',x===c));render()});document.getElementById('searchForm').onsubmit=e=>{e.preventDefault();filter='all';document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('active',x.dataset.filter==='all'));render()};input.oninput=render;document.getElementById('reset').onclick=()=>{filter='all';input.value='';document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('active',x.dataset.filter==='all'));render()};
+    const dialog=document.getElementById('detailDialog'),menuDialog=document.getElementById('menuDialog');let menuScale=1,menuNaturalWidth=0;function applyMenuScale(){const img=document.getElementById('menuImage');if(menuNaturalWidth)img.style.width=`${Math.round(menuNaturalWidth*menuScale)}px`}function openMenu(url){menuScale=1;const img=document.getElementById('menuImage');img.onload=()=>{menuNaturalWidth=img.naturalWidth;applyMenuScale()};img.src=url;menuDialog.showModal()}function showDetail(p){const votes=JSON.parse(localStorage.getItem('campusGuideQA')||'[]').filter(v=>v.place===p.name),menu=safeMenuUrl(p);document.getElementById('dialogContent').innerHTML=`<div class="visual ${p.tone}" style="height:105px;border-radius:12px;justify-content:center">${p.image?'':p.icon}</div><h2>${p.name}</h2><p class="detail-info">${distanceText(p)}・${p.hours}・${p.price}</p><div class="tags">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div><div class="info-block"><strong>學生近期回報</strong>${p.desc}</div><div class="info-block"><strong>最新菜單</strong>${menu?`<button class="menu-preview" data-menu="${menu}">放大查看店家菜單</button>`:'尚未提供菜單連結。'}</div><div class="info-block"><strong>小問題：現在資訊正確嗎？</strong>${votes.length?`已有 ${votes.length} 位學生參與確認。`:''}<br><button class="qa-vote" data-vote="正確">正確</button> <button class="qa-vote" data-vote="需要更新">需要更新</button></div><p class="notice">資訊最後確認：${p.updated}・<button>回報資訊有誤</button></p>`;document.querySelectorAll('.qa-vote').forEach(b=>b.onclick=()=>{const all=JSON.parse(localStorage.getItem('campusGuideQA')||'[]');all.unshift({place:p.name,answer:b.dataset.vote,at:new Date().toLocaleString('zh-TW')});localStorage.setItem('campusGuideQA',JSON.stringify(all));b.parentElement.innerHTML='<strong>謝謝你的確認！</strong>你的回饋已記錄。'});document.querySelectorAll('.menu-preview').forEach(b=>b.onclick=()=>openMenu(b.dataset.menu));dialog.showModal()}document.querySelector('.close').onclick=()=>dialog.close();document.querySelector('.close-menu').onclick=()=>menuDialog.close();document.querySelectorAll('.menu-zoom').forEach(b=>b.onclick=()=>{menuScale=b.dataset.zoom==='+'?menuScale+.25:b.dataset.zoom==='-'?Math.max(.5,menuScale-.25):1;applyMenuScale()});
+    function setUserLocation(lng,lat,source){window.demoCenter=[lng,lat];window.userLocation={lng,lat};map.flyTo({center:window.demoCenter,zoom:15});if(userMarker)userMarker.remove();const user=document.createElement('div');user.className='user-marker';userMarker=new maplibregl.Marker({element:user}).setLngLat(window.demoCenter).setPopup(new maplibregl.Popup({offset:12}).setText('你的目前位置')).addTo(map);document.getElementById('area').textContent=source;document.getElementById('locate').textContent='✓ 已設定位置';render()}
+    function initMap(){map=new maplibregl.Map({container:'realMap',style:'https://tiles.openfreemap.org/styles/liberty',center:[120.96,23.7],zoom:6.7,attributionControl:true});map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-right');}
+    function syncMarkers(){if(!map)return;mapMarkers.forEach(m=>m.remove());mapMarkers=[];activePlaces.forEach((p,i)=>{const a=(i/places.length)*Math.PI*2;const pos=(Number.isFinite(p.lng)&&Number.isFinite(p.lat))?[p.lng,p.lat]:window.demoCenter?[window.demoCenter[0]+Math.cos(a)*.0045,window.demoCenter[1]+Math.sin(a)*.0035]:null;if(!pos)return;const el=document.createElement('button');el.className='place-marker';el.setAttribute('aria-label',p.name);el.innerHTML=`<span>${p.icon}</span>`;el.onclick=()=>showDetail(p);mapMarkers.push(new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat(pos).setPopup(new maplibregl.Popup({offset:18}).setHTML(`<strong>${p.name}</strong><br><small>${p.distance}・${Number.isFinite(p.lng)?'店家座標':'示範資料'}</small>`)).addTo(map));});document.getElementById('mapNote').textContent=mapMarkers.length?`${mapMarkers.length} 個地點・已依篩選更新`:'請定位，或在管理後台填寫店家座標';}
+    function useLocation(){if(!navigator.geolocation){document.getElementById('area').textContent='此瀏覽器不支援定位，請直接點選地圖';return}navigator.geolocation.getCurrentPosition(pos=>setUserLocation(pos.coords.longitude,pos.coords.latitude,'已使用你的目前位置'),()=>{document.getElementById('area').textContent='無法取得位置，請直接點選地圖設定位置'});}document.getElementById('locate').onclick=useLocation;document.getElementById('menuToggle').onclick=()=>{const drawer=document.getElementById('drawer');drawer.hidden=!drawer.hidden};document.getElementById('feedbackForm').onsubmit=e=>{e.preventDefault();const text=document.getElementById('feedbackText').value.trim();if(!text)return;const feedback=JSON.parse(localStorage.getItem('campusGuideFeedback')||'[]');feedback.unshift({type:document.getElementById('feedbackType').value,text,createdAt:new Date().toLocaleString('zh-TW')});localStorage.setItem('campusGuideFeedback',JSON.stringify(feedback));document.getElementById('feedbackText').value='';document.getElementById('feedbackStatus').textContent='已收到你的回饋，謝謝你幫忙讓資訊更可靠。'};initMap();render();
+  document.getElementById('exploreArea').onclick=()=>{const b=map.getBounds(),inside=p=>Number.isFinite(p.lng)&&Number.isFinite(p.lat)&&p.lng>=b.getWest()&&p.lng<=b.getEast()&&p.lat>=b.getSouth()&&p.lat<=b.getNorth();document.querySelectorAll('.place').forEach((card,i)=>card.style.display=inside(activePlaces[i])?'':'none');document.getElementById('mapNote').textContent='已探索目前地圖範圍';document.getElementById('clearArea').hidden=false};document.getElementById('clearArea').onclick=()=>{document.querySelectorAll('.place').forEach(card=>card.style.display='');document.getElementById('mapNote').textContent='尚未選擇探索區域';document.getElementById('clearArea').hidden=true};
+  document.querySelector('.map-actions').style.display='none';document.querySelector('.map-label').firstChild.textContent='附近地圖';document.getElementById('area').textContent='查看已審核店家';
+  </script><script>
+  // 回饋可附上菜單圖片，讓管理者能直接核對新店家資訊。
+  const feedbackForm = document.getElementById('feedbackForm');
+  const feedbackUpload = document.createElement('label');
+  feedbackUpload.className = 'feedback-upload';
+  feedbackUpload.innerHTML = '可附最新菜單圖片（選填，限 3 MB）<input id="feedbackMenuFile" type="file" accept="image/*">';
+  feedbackForm.querySelector('button').before(feedbackUpload);
+  const feedbackStyle = document.createElement('style');
+  feedbackStyle.textContent = '.feedback-upload{grid-column:2;color:var(--muted);font-size:13px}.feedback-upload input{display:block;width:100%;margin-top:5px;font:inherit;border:1px solid var(--line);border-radius:9px;padding:8px;background:#fff;color:var(--ink)}@media(max-width:760px){.feedback-upload{grid-column:auto}}';
+  document.head.appendChild(feedbackStyle);
+  safeMenuUrl = function (value) { if (/^data:image\//.test(value || '')) return value; try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) ? url.href : ''; } catch { return ''; } };
+  const readFeedbackImage = file => new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
+  feedbackForm.onsubmit = async event => {
+    event.preventDefault();
+    const text = document.getElementById('feedbackText').value.trim();
+    const file = document.getElementById('feedbackMenuFile').files[0];
+    const status = document.getElementById('feedbackStatus');
+    if (!text) return;
+    if (file && file.size > 3 * 1024 * 1024) { status.textContent = '菜單圖片請小於 3 MB。'; return; }
+    try {
+      const feedback = JSON.parse(localStorage.getItem('campusGuideFeedback') || '[]');
+      feedback.unshift({ type: document.getElementById('feedbackType').value, text, menuImage: file ? await readFeedbackImage(file) : '', menuFileName: file?.name || '', createdAt: new Date().toLocaleString('zh-TW') });
+      localStorage.setItem('campusGuideFeedback', JSON.stringify(feedback));
+      feedbackForm.reset();
+      status.textContent = '已收到你的回饋，謝謝你幫忙讓資訊更可靠。';
+    } catch { status.textContent = '圖片無法讀取，請改用較小的圖片重試。'; }
+  };
+  </script><script>
+  // 封面一律以 cover 呈現，並讀取管理者設定的焦點位置。
+  const renderCardsWithMedia = render;
+  render = function () {
+    renderCardsWithMedia();
+    [...document.querySelectorAll('.visual')].forEach((visual, index) => {
+      const place = activePlaces[index];
+      if (!place?.image) return;
+      const position = place.coverPosition || { x: 50, y: 50 };
+      visual.style.backgroundSize = 'cover';
+      visual.style.backgroundPosition = `${position.x}% ${position.y}%`;
+    });
+    [...document.querySelectorAll('.place')].forEach((card, index) => {
+      const place = activePlaces[index];
+      if (!place?.menu || card.querySelector('.menu-attached')) return;
+      const note = document.createElement('span');
+      note.className = 'tag menu-attached';
+      note.textContent = '已附菜單';
+      card.querySelector('.tags').appendChild(note);
+    });
+  };
+  render();
+  </script><script>
+  // 首頁直接顯示菜單縮圖；點擊仍會以原始檔案尺寸開啟。
+  const renderCardsWithMenuThumbnail = render;
+  render = function () {
+    renderCardsWithMenuThumbnail();
+    activePlaces.forEach((place, index) => {
+      const card = document.querySelectorAll('.place')[index];
+      const menu = safeMenuUrl(place.menu || '');
+      if (!card || !menu || card.querySelector('.menu-thumbnail')) return;
+      const preview = document.createElement('button');
+      preview.type = 'button';
+      preview.className = 'menu-thumbnail';
+      preview.title = '查看原始尺寸菜單';
+      preview.innerHTML = `<img src="${menu}" alt="${place.name} 的菜單縮圖"><span>點擊查看完整菜單</span>`;
+      preview.onclick = () => openMenu(menu);
+      const detail = card.querySelector('.detail');
+      detail.before(preview);
+    });
+  };
+  const menuThumbnailStyle = document.createElement('style');
+  menuThumbnailStyle.textContent = '.menu-thumbnail{display:flex;width:calc(100% - 30px);margin:12px 15px 2px;padding:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;text-align:left;cursor:pointer}.menu-thumbnail img{width:74px;height:52px;object-fit:cover;object-position:center}.menu-thumbnail span{padding:15px 10px;color:var(--brand);font:700 13px ui-sans-serif,system-ui,"Noto Sans TC",Arial}.menu-thumbnail:hover{border-color:var(--brand)}';
+  document.head.appendChild(menuThumbnailStyle);
+  render();
+  </script><script>
+  // 菜單開啟時先依閱讀區寬度呈現，不再依小型縮圖的原始寬度縮在左上角。
+  const menuNotice = document.createElement('p');
+  menuNotice.id = 'menuQualityNotice';
+  menuNotice.style.cssText = 'margin:0 0 10px;color:var(--muted);font-size:13px';
+  document.querySelector('#menuDialog h2').after(menuNotice);
+  applyMenuScale = function () {
+    const image = document.getElementById('menuImage');
+    const viewport = image.parentElement.clientWidth - 2;
+    const baseWidth = Math.max(menuNaturalWidth, viewport);
+    image.style.width = `${Math.round(baseWidth * menuScale)}px`;
+  };
+  const openMenuWithReadableSize = openMenu;
+  openMenu = function (url) {
+    openMenuWithReadableSize(url);
+    const image = document.getElementById('menuImage');
+    image.onload = () => {
+      menuNaturalWidth = image.naturalWidth;
+      applyMenuScale();
+      menuNotice.textContent = menuNaturalWidth < 700 ? `這張菜單原始寬度只有 ${menuNaturalWidth}px；目前已放大顯示，但建議改上傳原始照片或 PDF，文字會更清楚。` : '已依閱讀區放大呈現；可用上方按鈕調整大小。';
+    };
+  };
+  </script><script>
+  // 文字菜單使用純文字呈現，避免圖片縮放與外部連結造成的可讀性問題。
+  // 舊版圖片／連結菜單不再在公開首頁使用。
+  safeMenuUrl = () => '';
+  const escapeMenuText = value => String(value).replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[char]);
+  const showDetailWithTextMenu = showDetail;
+  showDetail = function (place) {
+    showDetailWithTextMenu(place);
+    if (!place.menuText) return;
+    const blocks = document.querySelectorAll('#dialogContent .info-block');
+    const menuBlock = blocks[1];
+    if (!menuBlock) return;
+    menuBlock.innerHTML = `<strong>店家菜單</strong><div class="text-menu">${escapeMenuText(place.menuText)}</div><small>菜單由管理者整理，建議出發前再次確認。</small>`;
+  };
+  const renderCardsWithTextMenu = render;
+  render = function () {
+    renderCardsWithTextMenu();
+    activePlaces.forEach((place, index) => {
+      if (!place.menuText) return;
+      const card = document.querySelectorAll('.place')[index];
+      if (!card || card.querySelector('.text-menu-attached')) return;
+      const badge = document.createElement('span');
+      badge.className = 'tag text-menu-attached';
+      badge.textContent = '文字菜單';
+      card.querySelector('.tags').appendChild(badge);
+    });
+  };
+  const textMenuStyle = document.createElement('style');
+  textMenuStyle.textContent = '.text-menu{margin:8px 0;padding:11px;background:var(--soft);border-radius:8px;white-space:pre-wrap;line-height:1.8;font-family:ui-monospace,"Noto Sans TC",monospace}.text-menu+small{color:var(--muted)}';
+  document.head.appendChild(textMenuStyle);
+  render();
+  </script><script>
+  // 公開網站不再呈現菜單；保留店家近期資訊與學生回報。
+  const showDetailWithoutMenu = showDetail;
+  showDetail = function (place) {
+    showDetailWithoutMenu(place);
+    [...document.querySelectorAll('#dialogContent .info-block')].forEach(block => {
+      if (block.querySelector('strong')?.textContent.includes('菜單')) block.remove();
+    });
+  };
+  const renderWithoutMenu = render;
+  render = function () {
+    renderWithoutMenu();
+    document.querySelectorAll('.text-menu-attached,.menu-attached,.menu-thumbnail').forEach(node => node.remove());
+    document.querySelectorAll('.detail').forEach(button => { button.textContent = '查看近期資訊 →'; });
+  };
+  render();
+  </script><script>
+  // 今天的指定日期例外優先於平日固定營業時間。
+  const localDate = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const minutesOf = value => value?.split(':').reduce((total, part) => total * 60 + Number(part), 0);
+  const todaySpecial = place => (place.specialHours || []).find(item => item.date === localDate(new Date()));
+  statusOf = function (place) {
+    const now = new Date(), minutes = now.getHours() * 60 + now.getMinutes(), special = todaySpecial(place);
+    if (special) { if (special.closed) return '今日特別休息'; const open = minutesOf(special.open), close = minutesOf(special.close); return Number.isFinite(open) && Number.isFinite(close) && minutes >= open && minutes < close ? '營業中（今日調整）' : '休息中（今日調整）'; }
+    if (place.days?.length && !place.days.includes(now.getDay())) return '今日休息';
+    const slots = place.periods || [];
+    if (!slots.length) return '時間待確認';
+    return slots.some(slot => { const open = minutesOf(slot.open), close = minutesOf(slot.close); return Number.isFinite(open) && Number.isFinite(close) && minutes >= open && minutes < close; }) ? '營業中' : '休息中';
+  };
+  const renderWithSpecialHours = render;
+  render = function () {
+    renderWithSpecialHours();
+    activePlaces.forEach((place, index) => {
+      const special = todaySpecial(place), card = document.querySelectorAll('.place')[index];
+      if (!special || !card) return;
+      const meta = card.querySelector('.place-meta');
+      if (meta) meta.textContent = `${distanceText(place)}・${special.closed ? '今日特別休息' : `今日 ${special.open}–${special.close}`}・${place.price}`;
+    });
+  };
+  render();
+  </script><script>
+  // 先看特定日期例外，否則依今天是星期幾讀取專屬固定時段。
+  const weeklySlotsForToday = place => place.weeklyHours?.[new Date().getDay()];
+  const slotsText = slots => slots.filter(slot => slot.open || slot.close).map(slot => `${slot.open || '?'}–${slot.close || '?'}`).join('、');
+  statusOf = function (place) {
+    const now = new Date(), minutes = now.getHours() * 60 + now.getMinutes(), special = todaySpecial(place);
+    let slots;
+    if (special) { if (special.closed) return '今日特別休息'; slots = [{ open: special.open, close: special.close }]; }
+    else if (place.weeklyHours) { const today = weeklySlotsForToday(place); if (!today?.enabled) return '今日休息'; slots = today.periods || []; }
+    else { if (place.days?.length && !place.days.includes(now.getDay())) return '今日休息'; slots = place.periods || []; }
+    if (!slots.length) return '時間待確認';
+    const openNow = slots.some(slot => { const open = minutesOf(slot.open), close = minutesOf(slot.close); return Number.isFinite(open) && Number.isFinite(close) && minutes >= open && minutes < close; });
+    return special ? (openNow ? '營業中（今日調整）' : '休息中（今日調整）') : (openNow ? '營業中' : '休息中');
+  };
+  const renderWithWeeklyHours = render;
+  render = function () {
+    renderWithWeeklyHours();
+    activePlaces.forEach((place, index) => {
+      const card = document.querySelectorAll('.place')[index], special = todaySpecial(place);
+      if (!card || (!place.weeklyHours && !special)) return;
+      const meta = card.querySelector('.place-meta');
+      const hours = special ? (special.closed ? '今日特別休息' : `今日 ${special.open}–${special.close}`) : (weeklySlotsForToday(place)?.enabled ? `今日 ${slotsText(weeklySlotsForToday(place).periods) || '時間待確認'}` : '今日休息');
+      if (meta) meta.textContent = `${distanceText(place)}・${hours}・${place.price}`;
+    });
+  };
+  render();
+  </script><script>
+  // 基本時段與額外週別時段可同時存在，例如平日一組、週六另一組。
+  const weeklySlots = place => {
+    const day = new Date().getDay();
+    const base = place.days?.includes(day) ? (place.periods || []) : [];
+    const extra = (place.weeklySchedules || []).filter(schedule => schedule.days?.includes(day)).flatMap(schedule => schedule.periods || []);
+    return [...base, ...extra];
+  };
+  statusOf = function (place) {
+    const now = new Date(), minutes = now.getHours() * 60 + now.getMinutes();
+    const slots = weeklySlots(place);
+    if (!slots.length) return '今日休息';
+    return slots.some(slot => { const open = minutesOf(slot.open), close = minutesOf(slot.close); return Number.isFinite(open) && Number.isFinite(close) && minutes >= open && minutes < close; }) ? '營業中' : '休息中';
+  };
+  const renderWithExtraWeekly = render;
+  render = function () {
+    renderWithExtraWeekly();
+    activePlaces.forEach((place, index) => {
+      const card = document.querySelectorAll('.place')[index], meta = card?.querySelector('.place-meta');
+      if (meta && (place.weeklySchedules || []).length) meta.textContent = `${distanceText(place)}・今日 ${slotsText(weeklySlots(place)) || '休息'}・${place.price}`;
+    });
+  };
+  render();
+  </script><script>
+  // 當今天有每週特殊時段時，完全取代一般時段，而不是兩者相加。
+  const slotsWithWeeklyOverride = place => {
+    const day = new Date().getDay();
+    const overrides = (place.weeklySchedules || []).filter(rule => rule.days?.includes(day)).flatMap(rule => rule.periods || []);
+    return overrides.length ? overrides : (place.days?.includes(day) ? (place.periods || []) : []);
+  };
+  statusOf = function (place) {
+    const now = new Date(), minutes = now.getHours() * 60 + now.getMinutes(), slots = slotsWithWeeklyOverride(place);
+    if (!slots.length) return '今日休息';
+    return slots.some(slot => { const open = minutesOf(slot.open), close = minutesOf(slot.close); return Number.isFinite(open) && Number.isFinite(close) && minutes >= open && minutes < close; }) ? '營業中' : '休息中';
+  };
+  const renderWithWeeklyOverrides = render;
+  render = function () {
+    renderWithWeeklyOverrides();
+    activePlaces.forEach((place, index) => {
+      const card = document.querySelectorAll('.place')[index], meta = card?.querySelector('.place-meta');
+      if (meta && (place.weeklySchedules || []).length) meta.textContent = `${distanceText(place)}・今日 ${slotsText(slotsWithWeeklyOverride(place)) || '休息'}・${place.price}`;
+    });
+  };
+  render();
+  </script><script>
+  // 首頁統一依「今天是星期幾」決定顯示的營業時段。
+  // 優先順序：每週特殊時段 → 舊版逐日資料（相容）→ 一般營業時段。
+  const legacyStatusOf = statusOf;
+  const resolvedTodaySlots = place => {
+    const hasStructuredHours = Array.isArray(place.days) || Array.isArray(place.periods) || Array.isArray(place.weeklySchedules) || Boolean(place.weeklyHours);
+    if (!hasStructuredHours) return null;
+    const day = new Date().getDay();
+    const special = (place.weeklySchedules || [])
+      .filter(rule => rule.days?.includes(day))
+      .flatMap(rule => rule.periods || [])
+      .filter(slot => slot.open || slot.close);
+    if (special.length) return special;
+
+    if (place.weeklyHours) {
+      const schedule = place.weeklyHours[day];
+      if (!schedule?.enabled) return [];
+      return (schedule.periods || []).filter(slot => slot.open || slot.close);
+    }
+
+    return place.days?.includes(day) ? (place.periods || []).filter(slot => slot.open || slot.close) : [];
+  };
+  const todayHoursLabel = place => {
+    const slots = resolvedTodaySlots(place);
+    return slots === null ? (place.hours || '時間待確認') : slots.length ? slotsText(slots) : '今日休息';
+  };
+  statusOf = function (place) {
+    const now = new Date(), minutes = now.getHours() * 60 + now.getMinutes();
+    const slots = resolvedTodaySlots(place);
+    if (slots === null) return legacyStatusOf(place);
+    if (!slots.length) return '今日休息';
+    return slots.some(slot => {
+      const open = minutesOf(slot.open), close = minutesOf(slot.close);
+      return Number.isFinite(open) && Number.isFinite(close) && minutes >= open && minutes < close;
+    }) ? '營業中' : '休息中';
+  };
+  const renderWithTodayHours = render;
+  render = function () {
+    renderWithTodayHours();
+    activePlaces.forEach((place, index) => {
+      const card = document.querySelectorAll('.place')[index];
+      const meta = card?.querySelector('.place-meta');
+      if (meta) meta.textContent = `${distanceText(place)}・今日 ${todayHoursLabel(place)}・${place.price}`;
+      const badge = card?.querySelector('.open');
+      if (badge) badge.textContent = statusOf(place);
+    });
+  };
+  render();
+  </script>
+</body>
+</html>
