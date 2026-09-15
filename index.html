@@ -332,5 +332,20 @@
   };
   render();
   </script>
+  <script>
+  // GitHub Pages 測試版讀取已發布的資料快照；本機草案模式不受影響。
+  (async () => {
+    try {
+      const response = await fetch('./campus-guide-public-data.json', { cache: 'no-store' });
+      if (!response.ok) return;
+      const snapshot = await response.json();
+      if (!Array.isArray(snapshot.places) || !snapshot.places.length) return;
+      places.splice(0, places.length, ...snapshot.places);
+      render();
+    } catch (_) {
+      // 本機直接開啟檔案時沒有公開快照，保留原有草案資料即可。
+    }
+  })();
+  </script>
 </body>
 </html>
