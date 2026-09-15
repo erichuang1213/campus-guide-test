@@ -347,5 +347,41 @@
     }
   })();
   </script>
+  <script src="supabase-config.js"></script>
+  <script type="module" src="backend.js"></script>
+  <script type="module">
+  // 雲端資料優先：資料庫尚未啟用時，才維持 JSON 快照／本機草案模式。
+  const waitForBackend = async () => {
+    for (let i = 0; i < 50 && !window.CampusBackend; i++) await new Promise(resolve => setTimeout(resolve, 50));
+    return window.CampusBackend;
+  };
+  const backend = await waitForBackend();
+  if (backend?.enabled) {
+    try {
+      const remotePlaces = await backend.getPlaces();
+      if (remotePlaces.length) {
+        places.splice(0, places.length, ...remotePlaces);
+        render();
+      }
+      const form = document.getElementById('feedbackForm');
+      form.onsubmit = async event => {
+        event.preventDefault();
+        const text = document.getElementById('feedbackText').value.trim();
+        const file = document.getElementById('feedbackMenuFile')?.files[0];
+        const status = document.getElementById('feedbackStatus');
+        if (!text) return;
+        if (file && file.size > 3 * 1024 * 1024) { status.textContent = '圖片請小於 3 MB。'; return; }
+        status.textContent = '正在送出回饋…';
+        const readFile = file => new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
+        try {
+          await backend.submitFeedback({ type: document.getElementById('feedbackType').value, text, menuImage: file ? await readFile(file) : '', menuFileName: file?.name || '' });
+          form.reset(); status.textContent = '已收到你的回饋，謝謝你幫忙讓資訊更可靠。';
+        } catch (_) { status.textContent = '目前無法送出，請稍後再試。'; }
+      };
+    } catch (_) {
+      // 雲端尚未完成初始化時，繼續使用已發布快照，網站仍可瀏覽。
+    }
+  }
+  </script>
 </body>
 </html>

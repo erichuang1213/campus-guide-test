@@ -361,4 +361,73 @@ edit = index => { editWithWeeklyOverrides(index); weeklyOverrides = (places[inde
 const clearWithWeeklyOverrides = clearForm;
 clearForm = () => { clearWithWeeklyOverrides(); weeklyOverrides = []; renderWeeklyOverrides(); };
 renderWeeklyOverrides();
+const publishPanel = document.createElement('section');
+publishPanel.className = 'panel';
+publishPanel.style.marginBottom = '24px';
+publishPanel.innerHTML = '<h2>發佈測試資料</h2><p class="sub">將目前瀏覽器內的店家資料匯出成 JSON，提供給開發者更新公開測試網站。檔案不包含 API 金鑰。</p><div class="form-actions"><button class="primary" type="button" id="exportPublishData">下載公開資料 JSON</button></div><div class="status" id="exportPublishStatus"></div>';
+document.querySelector('.layout').before(publishPanel);
+document.getElementById('exportPublishData').onclick = () => {
+  const snapshot = { exportedAt: new Date().toISOString(), places: JSON.parse(localStorage.getItem('campusGuidePlaces') || '[]'), customTags: JSON.parse(localStorage.getItem('campusGuideCustomTags') || '[]') };
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' }));
+  link.download = 'campus-guide-public-data.json'; link.click(); URL.revokeObjectURL(link.href);
+  document.getElementById('exportPublishStatus').textContent = '已下載。請把 campus-guide-public-data.json 傳給開發者發布。';
+};
+</script><script src="supabase-config.js"></script><script type="module" src="backend.js"></script><script type="module">
+// 雲端管理模式：未登入者不能操作；登入後店家資料會與公開首頁共用。
+const waitForBackend = async () => {
+  for (let i = 0; i < 50 && !window.CampusBackend; i++) await new Promise(resolve => setTimeout(resolve, 50));
+  return window.CampusBackend;
+};
+const backend = await waitForBackend();
+const gate = document.createElement('div');
+gate.style.cssText = 'position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:20px;background:rgba(31,41,51,.76)';
+const panel = document.createElement('section');
+panel.style.cssText = 'width:min(430px,100%);padding:28px;background:#fffdf8;border-radius:18px;box-shadow:0 20px 60px #0005';
+gate.append(panel); document.body.append(gate);
+const message = text => { panel.innerHTML = `<h2 style="margin:0 0 8px">管理後台</h2><p style="color:#667085">${text}</p>`; };
+const showLogin = (note = '請使用管理員帳號登入。') => {
+  panel.innerHTML = `<h2 style="margin:0 0 8px">管理後台登入</h2><p style="color:#667085">${note}</p><form id="cloudLogin" style="display:grid;gap:12px"><label>電子信箱<input id="cloudEmail" type="email" required style="width:100%;padding:10px;margin-top:4px"></label><label>密碼<input id="cloudPassword" type="password" minlength="6" required style="width:100%;padding:10px;margin-top:4px"></label><button class="primary">登入</button><button class="secondary" type="button" id="cloudSignup">第一次使用，建立帳號</button><small id="cloudStatus" style="color:#667085"></small></form>`;
+  const submit = async create => {
+    const email = document.getElementById('cloudEmail').value.trim(), password = document.getElementById('cloudPassword').value;
+    const status = document.getElementById('cloudStatus'); status.textContent = create ? '正在建立帳號…' : '正在登入…';
+    try {
+      if (create) await backend.signUp(email, password); else await backend.signIn(email, password);
+      await backend.claimAdmin(); await startAdmin();
+    } catch (error) { status.textContent = error.message || '無法登入，請確認信箱與密碼。'; }
+  };
+  document.getElementById('cloudLogin').onsubmit = event => { event.preventDefault(); submit(false); };
+  document.getElementById('cloudSignup').onclick = () => submit(true);
+};
+const startAdmin = async () => {
+  try {
+    if (!await backend.isAdmin()) { showLogin('此帳號沒有管理權限。'); return; }
+    const localSave = save;
+    let syncing = false;
+    save = () => {
+      localSave();
+      if (!syncing) backend.syncPlaces(places).catch(error => { document.getElementById('status').textContent = `雲端儲存失敗：${error.message}`; });
+    };
+    const originalAddTag = document.getElementById('addTag').onclick;
+    document.getElementById('addTag').onclick = () => { originalAddTag(); backend.saveSettings(customTags).catch(() => {}); };
+    let remotePlaces = await backend.getPlaces();
+    if (!remotePlaces.length) {
+      const snapshot = await fetch('./campus-guide-public-data.json', { cache: 'no-store' }).then(response => response.ok ? response.json() : null);
+      remotePlaces = snapshot?.places || places;
+      places.splice(0, places.length, ...remotePlaces);
+      syncing = true; localSave(); syncing = false;
+      await backend.syncPlaces(places);
+    } else { places.splice(0, places.length, ...remotePlaces); localSave(); }
+    const remoteTags = await backend.getSettings();
+    if (remoteTags.length) { customTags = remoteTags; tags = [...defaultTags, ...customTags]; renderTagChoices(); }
+    const loginInfo = document.createElement('div');
+    loginInfo.className = 'status'; loginInfo.style.marginBottom = '12px';
+    loginInfo.innerHTML = `已登入雲端管理後台。所有儲存會同步到公開首頁。 <button type="button" class="secondary" id="cloudLogout">登出</button>`;
+    document.querySelector('.layout').before(loginInfo);
+    document.getElementById('cloudLogout').onclick = async () => { await backend.signOut(); location.reload(); };
+    gate.remove(); document.getElementById('status').textContent = '已連上雲端資料庫。';
+  } catch (error) { message(`無法啟用後台：${error.message}`); }
+};
+if (!backend?.enabled) message('雲端後台設定尚未完成。');
+else if (await backend.session()) startAdmin(); else showLogin();
 </script></body></html>
