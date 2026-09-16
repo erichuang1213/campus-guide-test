@@ -333,6 +333,20 @@
   render();
   </script>
   <script>
+  // 首頁只負責找店；近期資訊與完整菜單改到獨立頁閱讀。
+  const renderWithDetailPages = render;
+  render = function () {
+    renderWithDetailPages();
+    document.querySelectorAll('.detail').forEach((button, index) => {
+      const place = activePlaces[index];
+      if (!place) return;
+      button.textContent = '查看近期資訊與菜單 →';
+      button.onclick = () => { location.href = `place.html?name=${encodeURIComponent(place.name)}`; };
+    });
+  };
+  render();
+  </script>
+  <script>
   // GitHub Pages 測試版讀取已發布的資料快照；本機草案模式不受影響。
   (async () => {
     try {
