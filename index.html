@@ -397,5 +397,11 @@
     }
   }
   </script>
+  <script>
+    // 選單只留下真正需要離開首頁時才會用到的回饋入口。
+    document.querySelectorAll('#drawer nav a').forEach((link, index) => {
+      if (index < 2) link.remove();
+    });
+  </script>
 </body>
 </html>
