@@ -429,4 +429,10 @@ const startAdmin = async () => {
 };
 if (!backend?.enabled) message('雲端後台設定尚未完成。');
 else if (await backend.session()) startAdmin(); else showLogin();
+</script><script>
+// 菜單是獨立的後台工作，不混在店家基本資料表單內。
+const menuAdminLink=document.createElement('a');
+menuAdminLink.href='menus.html';
+menuAdminLink.textContent='菜單管理';
+document.querySelector('.admin-links').append(menuAdminLink);
 </script></body></html>
