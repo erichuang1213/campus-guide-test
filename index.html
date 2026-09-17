@@ -404,23 +404,62 @@
     });
   </script>
 <script type="module">
+  // 首頁保留主訴求，把冗長說明移除；登入是選擇性的，只有確認店家時才需要。
   document.querySelector('.hero .lead')?.remove();
   for (let i = 0; i < 50 && !window.CampusBackend; i++) await new Promise(resolve => setTimeout(resolve, 50));
+  const backend = window.CampusBackend;
+  if (backend?.enabled) {
+  const loginButton = document.createElement('button');
+  loginButton.className = 'location';
+  loginButton.type = 'button';
+  const navRight = document.querySelector('.nav-right');
+  const refreshLogin = async () => {
+    const session = await backend.session();
+    loginButton.textContent = session ? '登出' : '使用 Google 登入';
+    loginButton.onclick = async () => {
+      if (await backend.session()) { await backend.signOut(); location.reload(); }
+      else await backend.signInWithGoogle(location.href);
+    };
+  };
+  navRight?.prepend(loginButton);
+  await refreshLogin();
   try {
-    const places = await window.CampusBackend?.getPlaces() || [];
+    const places = await backend.getPlaces() || [];
     const byName = new Map(places.map(place => [place.name, place]));
+    let confirmationByName = new Map();
+    try {
+      const rows = await backend.getConfirmations(places.map(place => place.name));
+      confirmationByName = new Map(rows.map(row => [row.place_name, row]));
+    } catch (_) { /* SQL 尚未套用時仍可正常查店 */ }
+    const formatTime = value => value ? new Intl.DateTimeFormat('zh-TW', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : '';
     const decorate = () => document.querySelectorAll('.place').forEach(card => {
       if (card.querySelector('.confirmation-note')) return;
-      const place = byName.get(card.querySelector('h3')?.textContent?.trim());
+      const name = card.querySelector('h3')?.textContent?.trim();
+      const place = byName.get(name);
       if (!place) return;
+      const confirmation = confirmationByName.get(name);
       const note = document.createElement('p');
-      note.className = 'confirmation-note'; note.style.cssText = 'margin:10px 0 0;color:var(--muted);font-size:13px';
-      const link = document.createElement('a'); link.href = `submit-feedback.html?place=${encodeURIComponent(place.name)}`; link.textContent = '回報狀況'; link.style.marginLeft = '8px';
-      note.append(`最後確認：${place.updated || '待確認'}・`, link);
+      note.className = 'confirmation-note';
+      note.style.cssText = 'margin:10px 0 0;color:var(--muted);font-size:13px';
+      const check = document.createElement('button');
+      check.type = 'button'; check.textContent = '確認資訊';
+      check.style.cssText = 'margin-left:8px;border:0;background:none;padding:0;color:var(--brand);font:inherit;font-weight:700;cursor:pointer';
+      check.onclick = async () => {
+        if (!await backend.session()) { await backend.signInWithGoogle(location.href); return; }
+        check.disabled = true; check.textContent = '確認中…';
+        try { await backend.confirmPlace(place.name); check.textContent = '已確認，謝謝！'; }
+        catch (error) { check.disabled = false; check.textContent = error.message || '暫時無法確認'; }
+      };
+      const report = document.createElement('a');
+      report.href = `submit-feedback.html?place=${encodeURIComponent(place.name)}`;
+      report.textContent = '回報狀況'; report.style.marginLeft = '8px';
+      note.append(`最後確認：${confirmation ? formatTime(confirmation.confirmed_at) : (place.updated || '待確認')}・`, check, '・', report);
       card.querySelector('.place-body')?.append(note);
     });
-    decorate(); new MutationObserver(decorate).observe(document.getElementById('grid') || document.body, { childList: true, subtree: true });
+    decorate();
+    new MutationObserver(decorate).observe(document.getElementById('places') || document.body, { childList: true, subtree: true });
   } catch (_) {}
+  }
 </script>
 </body>
 </html>
