@@ -403,5 +403,25 @@
       if (index < 2) link.remove();
     });
   </script>
+<script type="module">
+  document.querySelector('.hero .lead')?.remove();
+  for (let i = 0; i < 50 && !window.CampusBackend; i++) await new Promise(resolve => setTimeout(resolve, 50));
+  try {
+    const places = await window.CampusBackend?.getPlaces() || [];
+    const byName = new Map(places.map(place => [place.name, place]));
+    const decorate = () => document.querySelectorAll('.place').forEach(card => {
+      if (card.querySelector('.confirmation-note')) return;
+      const place = byName.get(card.querySelector('h3')?.textContent?.trim());
+      if (!place) return;
+      const note = document.createElement('p');
+      note.className = 'confirmation-note'; note.style.cssText = 'margin:10px 0 0;color:var(--muted);font-size:13px';
+      const link = document.createElement('a'); link.href = `submit-feedback.html?place=${encodeURIComponent(place.name)}`; link.textContent = '回報狀況'; link.style.marginLeft = '8px';
+      note.append(`最後確認：${place.updated || '待確認'}・`, link);
+      card.querySelector('.place-body')?.append(note);
+    });
+    decorate(); new MutationObserver(decorate).observe(document.getElementById('grid') || document.body, { childList: true, subtree: true });
+  } catch (_) {}
+</script>
 </body>
 </html>
+
