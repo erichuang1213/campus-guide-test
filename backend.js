@@ -20,6 +20,9 @@ if (!config?.url || !config?.anonKey) {
     client,
     async session() { return result(await client.auth.getSession()).session; },
     async signIn(email, password) { return result(await client.auth.signInWithPassword({ email, password })); },
+    async signInWithGoogle(redirectTo = window.location.href) {
+      return result(await client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } }));
+    },
     async signUp(email, password) { return result(await client.auth.signUp({ email, password })); },
     async signOut() { return result(await client.auth.signOut()); },
     async claimAdmin() {
@@ -71,5 +74,15 @@ if (!config?.url || !config?.anonKey) {
       return result(await client.from('feedback').select('*').order('created_at', { ascending: false }));
     },
     async clearFeedback() { result(await client.from('feedback').delete().neq('id', '00000000-0000-0000-0000-000000000000')); }
+    ,async getConfirmations(placeNames) {
+      if (!placeNames?.length) return [];
+      return result(await client.from('place_confirmations').select('place_name,status,confirmed_at').in('place_name', placeNames).order('confirmed_at', { ascending: false }));
+    }
+    ,async confirmPlace(placeName, status = '資訊正確') {
+      const session = await this.session();
+      if (!session) throw new Error('請先使用 Google 登入後再確認。');
+      result(await client.from('place_confirmations').insert({ place_name: placeName, status }));
+    }
   };
 }
+
