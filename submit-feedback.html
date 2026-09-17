@@ -50,7 +50,13 @@
         if(backend?.enabled)await backend.submitFeedback(entry);
         else{const local=JSON.parse(localStorage.getItem('campusGuideFeedback')||'[]');local.unshift({...entry,createdAt:new Date().toLocaleString('zh-TW')});localStorage.setItem('campusGuideFeedback',JSON.stringify(local))}
         form.reset();updateFeedbackType(document.getElementById('feedbackType'));status.textContent='已收到你的回饋，謝謝你幫忙讓資訊更可靠。';
-      }catch(_){status.textContent='目前無法送出，請稍後再試。'}finally{submit.disabled=false}
+      }catch(error){status.textContent=`目前無法送出：${error.message||'請稍後再試。'}`}finally{submit.disabled=false}
     };
+    const placeName=new URLSearchParams(location.search).get('place');
+    if(placeName){
+      document.getElementById('feedbackText').value=`店家：${placeName}\n狀況：`;
+      document.getElementById('feedbackText').focus();
+    }
   </script>
 </body></html>
+
