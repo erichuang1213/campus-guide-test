@@ -1,87 +1,13 @@
-<!doctype html>
-<html lang="zh-Hant" class="backend-guard"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>待審核店家｜校邊好去處</title><style>html.backend-guard{visibility:hidden}
-:root{--ink:#1f2933;--muted:#667085;--paper:#fffdf8;--line:#e8e2d7;--brand:#176b5b;--soft:#f7f4ec;--warn:#a55b16}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.55 ui-sans-serif,system-ui,"Noto Sans TC",Arial,sans-serif}.shell{max-width:1080px;margin:auto;padding:0 28px}nav{height:74px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.logo{font-weight:800;font-size:20px}.logo b,a{color:var(--brand)}a{font-weight:700;text-decoration:none}.head{padding:38px 0 20px}.head h1{font-size:32px;letter-spacing:-1px;margin:0}.head p{margin:5px 0 0;color:var(--muted)}.note{padding:13px 16px;background:#fff3df;border-radius:11px;color:#7a4a11;margin:0 0 22px}.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;color:var(--muted)}.toolbar button,.action{font:inherit;border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 11px;cursor:pointer}.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px}.card h2{font-size:18px;margin:0}.meta{color:var(--muted);font-size:14px;margin:4px 0 12px}.tags{display:flex;flex-wrap:wrap;gap:6px}.tag{font-size:12px;background:var(--soft);padding:4px 7px;border-radius:5px}.actions{display:flex;gap:8px;margin-top:17px}.add{background:var(--brand);color:#fff;border-color:var(--brand)}.skip{color:#8c3d20}.merge{color:var(--warn)}.empty{grid-column:1/-1;text-align:center;padding:44px;background:var(--soft);border-radius:14px;color:var(--muted)}@media(max-width:700px){.shell{padding:0 18px}.cards{grid-template-columns:1fr}.toolbar{align-items:start;gap:10px;flex-direction:column}}
-</style></head><body><nav class="shell"><div class="logo">校邊<b>好去處</b></div><a href="admin.html">← 回管理後台</a></nav><main class="shell"><section class="head"><h1>待審核店家</h1><p>模擬自動搜尋生活圈後產生的候選店家；這些資料僅供測試流程。</p></section><div class="note">目前為模擬模式。正式版會由地點資料來源自動提供候選店家，再由你決定是否公開。</div><div class="toolbar"><span id="count"></span><button id="reset">重設模擬候選資料</button></div><section class="cards" id="cards"></section></main><script>
-const seed=[{id:'c1',name:'禾日小館',category:'台式餐廳',address:'生活圈範例路 18 號',lat:25.0341,lng:121.5658},{id:'c2',name:'橙光咖啡',category:'咖啡廳',address:'生活圈範例路 42 號',lat:25.0352,lng:121.5666},{id:'c3',name:'夜半食堂',category:'居酒屋／晚餐',address:'商圈範例街 8 號',lat:25.0318,lng:121.5639},{id:'c4',name:'好飽便當',category:'便當／外帶',address:'生活圈範例路 76 號',lat:25.0326,lng:121.5671},{id:'c5',name:'木木甜點',category:'甜點／咖啡',address:'商圈範例街 26 號',lat:25.0361,lng:121.5629},{id:'c6',name:'青菜食堂',category:'素食餐廳',address:'生活圈範例路 91 號',lat:25.0309,lng:121.5663}];let candidates=JSON.parse(localStorage.getItem('campusGuideCandidates')||'null')||seed;const cards=document.getElementById('cards');function save(){localStorage.setItem('campusGuideCandidates',JSON.stringify(candidates));render()}function render(){document.getElementById('count').textContent=`尚有 ${candidates.length} 間待審核店家`;cards.innerHTML=candidates.length?candidates.map(c=>`<article class="card"><h2>${c.name}</h2><div class="meta">${c.category}・${c.address}</div><div class="tags"><span class="tag">已有座標</span><span class="tag">候選資料</span></div><div class="actions"><button class="action add" data-add="${c.id}">加入網站</button><button class="action merge" data-merge="${c.id}">與既有店家合併</button><button class="action skip" data-skip="${c.id}">略過</button></div></article>`).join(''):'<div class="empty">已處理完本批候選店家。可重設資料再次測試。</div>';document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>add(b.dataset.add));document.querySelectorAll('[data-skip],[data-merge]').forEach(b=>b.onclick=()=>{candidates=candidates.filter(c=>c.id!==(b.dataset.skip||b.dataset.merge));save()})}function add(id){const c=candidates.find(x=>x.id===id),places=JSON.parse(localStorage.getItem('campusGuidePlaces')||'[]');places.unshift({name:c.name,icon:'📍',tone:'tone-1',price:'待確認',lat:c.lat,lng:c.lng,tags:[c.category],periods:[],days:[],hours:'營業時間待確認',desc:'由候選店家匯入，等待補充在地資訊。',updated:'剛剛'});localStorage.setItem('campusGuidePlaces',JSON.stringify(places));candidates=candidates.filter(x=>x.id!==id);save()}document.getElementById('reset').onclick=()=>{candidates=seed;save()};render();
-</script><script>
-const selectedRegionIndex = new URLSearchParams(location.search).get('region');
-const selectedRegions = JSON.parse(localStorage.getItem('campusGuideRegions') || '[]');
-const selectedRegion = selectedRegionIndex === null ? null : selectedRegions[Number(selectedRegionIndex)];
-if (selectedRegion) {
-  document.querySelector('.head h1').textContent = `探索店家：${selectedRegion.name}`;
-  document.querySelector('.head p').textContent = '這一頁列出此生活圈的候選店家；確認後按「加入網站」，再到管理後台補齊資訊。';
-  document.querySelector('.note').textContent = '目前為模擬探索結果：用來測試「探索 → 審核 → 匯入」流程。正式版接上 Google Places 或其他資料來源後，才會搜尋你畫出的範圍。';
-}
-</script><script>
-if (selectedRegion) {
-  const searchButton = document.createElement('button');
-  searchButton.className = 'action add';
-  searchButton.textContent = '用 Google Places 搜尋此範圍（最多 20 間）';
-  document.querySelector('.toolbar').appendChild(searchButton);
-  const baseRender = render;
-  render = function () {
-    baseRender();
-    candidates.forEach((candidate, index) => {
-      const card = cards.children[index];
-      if (!card || !candidate.googleMapsUri) return;
-      const mapLink = document.createElement('a');
-      mapLink.href = candidate.googleMapsUri;
-      mapLink.target = '_blank';
-      mapLink.rel = 'noreferrer';
-      mapLink.className = 'action';
-      mapLink.textContent = '在 Google 地圖確認';
-      card.querySelector('.actions').appendChild(mapLink);
-    });
-  };
-  searchButton.onclick = async () => {
-    searchButton.disabled = true;
-    searchButton.textContent = '正在搜尋 Google Places…';
-    try {
-      const response = await fetch('/api/places/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ region: selectedRegion })
-      });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || '搜尋失敗。');
-      candidates = payload.places;
-      localStorage.setItem('campusGuideCandidates', JSON.stringify(candidates));
-      render();
-      document.getElementById('count').textContent = `Google Places 找到 ${candidates.length} 間、位於你畫出的生活圈內的候選店家`;
-    } catch (error) {
-      document.querySelector('.note').textContent = `無法搜尋：${error.message}。請確認你是從 http://localhost:8787 開啟網站，且 .env 已設定新金鑰與 Places API (New)。`;
-    } finally {
-      searchButton.disabled = false;
-      searchButton.textContent = '用 Google Places 搜尋此範圍（最多 20 間）';
-    }
-  };
-  render();
-}
-</script><script>
-// 不論候選資料從哪裡來，都讓管理者能辨識來源並回到原始 Google 地圖核對。
-const decorateCandidateCards = render;
-render = function () {
-  decorateCandidateCards();
-  candidates.forEach((candidate, index) => {
-    const card = cards.children[index];
-    if (!card) return;
-    if (candidate.source) {
-      const source = document.createElement('span');
-      source.className = 'tag';
-      source.textContent = candidate.source;
-      card.querySelector('.tags').appendChild(source);
-    }
-    if (candidate.googleMapsUri && ![...card.querySelectorAll('a')].some(anchor => anchor.href === candidate.googleMapsUri)) {
-      const link = document.createElement('a');
-      link.href = candidate.googleMapsUri;
-      link.target = '_blank';
-      link.rel = 'noreferrer';
-      link.className = 'action';
-      link.dataset.googleLink = 'true';
-      link.textContent = '在 Google 地圖確認';
-      card.querySelector('.actions').appendChild(link);
-    }
-  });
-};
-render();
-</script><script src="supabase-config.js"></script><script type="module" src="admin-guard.js"></script></body></html>
++<!doctype html>
+<html lang="zh-Hant" class="backend-guard"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>待審核店家｜校邊好去處</title><style>
+html.backend-guard{visibility:hidden}:root{--ink:#1f2933;--muted:#667085;--paper:#fffdf8;--line:#e8e2d7;--brand:#176b5b;--soft:#f7f4ec}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.55 ui-sans-serif,system-ui,"Noto Sans TC",Arial,sans-serif}.shell{max-width:1080px;margin:auto;padding:0 28px}nav{height:74px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.logo{font-weight:800;font-size:20px}.logo b,a{color:var(--brand)}a{font-weight:700;text-decoration:none}.head{padding:38px 0 20px}.head h1{font-size:32px;letter-spacing:-1px;margin:0}.head p,.meta{color:var(--muted)}.head p{margin:5px 0 0}.note{padding:13px 16px;background:#eaf6ef;border-radius:11px;color:#176b5b;margin:0 0 22px}.toolbar{display:flex;justify-content:space-between;gap:14px;margin-bottom:15px;color:var(--muted)}.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px}.card h2{font-size:18px;margin:0}.meta{font-size:14px;margin:4px 0 12px}.detail{font-size:14px;margin:6px 0;color:#40505d}.detail b{color:var(--ink)}.tags,.actions{display:flex;flex-wrap:wrap;gap:8px}.tag{font-size:12px;background:var(--soft);padding:4px 7px;border-radius:5px}.actions{margin-top:17px}.action{font:inherit;border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 11px;cursor:pointer}.add{background:var(--brand);color:#fff;border-color:var(--brand)}.skip{color:#8c3d20}.empty{grid-column:1/-1;text-align:center;padding:44px;background:var(--soft);border-radius:14px;color:var(--muted)}@media(max-width:700px){.shell{padding:0 18px}.cards{grid-template-columns:1fr}.toolbar{flex-direction:column}}
+</style></head><body><nav class="shell"><div class="logo">校邊<b>好去處</b></div><a href="admin.html">← 回管理後台</a></nav><main class="shell"><section class="head"><h1>待審核店家</h1><p>特約店家資料已匯入雲端；審核完成後才會顯示在公開網站。</p></section><div class="note">請核對店名、座標、優惠與營業時間。按「加入網站」後，仍可在店家資料頁補齊照片、標籤與菜單。</div><div class="toolbar"><span id="count">正在讀取待審核資料…</span><span id="status" role="status"></span></div><section class="cards" id="cards"></section></main><script src="supabase-config.js"></script><script type="module">
+await import('./admin-guard.js');await import('./backend.js');
+const backend=window.CampusBackend,cards=document.getElementById('cards'),count=document.getElementById('count'),status=document.getElementById('status');let candidates=[];
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const render=()=>{count.textContent=`尚有 ${candidates.length} 間待審核店家`;cards.innerHTML=candidates.length?candidates.map(c=>`<article class="card"><h2>${esc(c.name)}</h2><div class="meta">${esc(c.category||'待分類')}・${esc(c.address||'地址待確認')}</div><div class="tags"><span class="tag">已提供座標</span><span class="tag">${esc(c.source||'候選資料')}</span></div><p class="detail"><b>營業時間：</b>${esc(c.hours||'待確認')}</p><p class="detail"><b>特約優惠：</b>${esc(c.benefit||'待確認')}</p>${c.notes?'<p class="detail"><b>備註：</b>'+esc(c.notes)+'</p>':''}<div class="actions"><button class="action add" data-add="${c.id}">加入網站</button><button class="action skip" data-skip="${c.id}">略過</button></div></article>`).join(''):'<div class="empty">本批待審核店家已處理完成。</div>';cards.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>promote(b.dataset.add));cards.querySelectorAll('[data-skip]').forEach(b=>b.onclick=()=>remove(b.dataset.skip,'已略過這間店家。'));};
+const remove=async(id,message)=>{try{status.textContent='儲存中…';await backend.removeCandidate(id);candidates=candidates.filter(c=>c.id!==id);render();status.textContent=message;}catch(error){status.textContent='操作失敗：'+error.message;}};
+const promote=async id=>{const c=candidates.find(x=>x.id===id);if(!c)return;try{status.textContent='正在加入公開店家…';const places=await backend.getPlaces();places.unshift({id:crypto.randomUUID(),name:c.name,icon:'📍',tone:'tone-1',price:'待確認',lat:c.lat,lng:c.lng,tags:[c.category].filter(Boolean),periods:[],days:[],hours:c.hours||'營業時間待確認',desc:c.benefit?`學生會特約優惠：${c.benefit}`:'由特約店家資料匯入，等待補充資訊。',updated:'剛剛',address:c.address,notes:c.notes||'',validUntil:c.validUntil||''});await backend.syncPlaces(places);await backend.removeCandidate(id);candidates=candidates.filter(x=>x.id!==id);render();status.textContent='已加入網站，前台重新整理後會看到這間店家。';}catch(error){status.textContent='加入失敗：'+error.message;}};
+try{candidates=await backend.getCandidates();render();}catch(error){count.textContent='無法讀取待審核店家';status.textContent=error.message;}
+</script></body></html>
+
