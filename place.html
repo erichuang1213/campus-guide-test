@@ -138,6 +138,9 @@
         max-width: none;
         height: auto;
       }
+      .menu-pages { display:flex; flex-wrap:wrap; gap:8px; margin:13px 0 2px; }
+      .menu-pages button { border:1px solid var(--line); background:#fff; color:var(--brand); border-radius:999px; padding:7px 11px; font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+      .menu-pages button.active { background:var(--brand); color:#fff; border-color:var(--brand); }
       .loading {
         padding: 50px;
         text-align: center;
@@ -155,8 +158,7 @@
         }
       }
     </style>
-    <link href="public-pages.css?v=20260918" rel="stylesheet">
-</head>
+  </head>
   <body>
     <nav class="shell">
       <div class="logo">校邊<b>好去處</b></div>
@@ -200,17 +202,28 @@
           return;
         }
         document.title = p.name + "｜校邊好去處";
-        const text = p.menuText?.trim(),
-          image = valid(p.menu);
+        const text = p.menuText?.trim();
+        const images = [...new Set([
+          ...(Array.isArray(p.menuImages) ? p.menuImages : []),
+          p.menu,
+        ].map(valid).filter(Boolean))];
+        const image = images[0];
         const menu = text
           ? `<section class="section"><h2>店家菜單</h2><div class="text-menu">${escape(text)}</div><p class="empty" style="margin-top:10px;font-size:13px">菜單由管理者整理，出發前建議再次確認。</p></section>`
           : image
-            ? `<section class="section"><h2>店家菜單</h2><div class="tools"><button data-z="-">縮小</button><button data-z="0">適合閱讀區</button><button data-z="+">放大</button></div><div class="frame"><img id="menuImage" src="${p.menu}" alt="${escape(p.name)} 的菜單"></div></section>`
+            ? `<section class="section"><h2>店家菜單</h2><p class="empty" style="margin-top:-8px">共 ${images.length} 張菜單圖片，點選下方頁碼切換。</p><div class="menu-pages">${images.map((_, i) => `<button class="${i === 0 ? 'active' : ''}" data-menu-page="${i}">第 ${i + 1} 張</button>`).join('')}</div><div class="tools"><button data-z="-">縮小</button><button data-z="0">適合閱讀區</button><button data-z="+">放大</button></div><div class="frame"><img id="menuImage" src="${image}" alt="${escape(p.name)} 的菜單，第 1 張"></div></section>`
             : '<section class="section"><h2>店家菜單</h2><p class="empty">店家尚未提供菜單。</p></section>';
         app.innerHTML = `<a class="back" href="index.html">← 返回找店</a><div class="head"><div><h1>${escape(p.name)}</h1><p class="meta">${escape(p.hours || "營業時間待確認")}・${escape(p.price || "價位待確認")}</p></div><span class="state">${open(p)}</span></div><div class="tags">${(p.tags || []).map((x) => `<span class="tag">${escape(x)}</span>`).join("")}</div><section class="section"><h2>近期資訊</h2><p>${escape(p.desc || "尚未補充學生提醒。")}</p></section>${menu}<section class="section"><h2>資訊更新</h2><p>若資訊有誤，歡迎到 <a href="submit-feedback.html">提交回饋</a> 告訴我們。</p></section>`;
         if (image && !text) {
           let z = 1,
             img = document.getElementById("menuImage");
+          document.querySelectorAll("[data-menu-page]").forEach((button) => (button.onclick = () => {
+            document.querySelectorAll("[data-menu-page]").forEach((item) => item.classList.toggle("active", item === button));
+            img.src = images[Number(button.dataset.menuPage)];
+            img.alt = `${p.name} 的菜單，第 ${Number(button.dataset.menuPage) + 1} 張`;
+            z = 1;
+            img.style.width = "100%";
+          }));
           document.querySelectorAll("[data-z]").forEach(
             (b) =>
               (b.onclick = () => {
