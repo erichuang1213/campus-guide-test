@@ -34,10 +34,13 @@
       document.getElementById('menuField').hidden=select.value!=='推薦新增店家';
     }
   </script>
-  <script src="supabase-config.js"></script><script type="module" src="backend.js"></script>
+  <script src="supabase-config.js"></script><script type="module" src="backend.js?v=feedback-identity-1"></script>
   <script type="module">
     const wait=async()=>{for(let i=0;i<50&&!window.CampusBackend;i++)await new Promise(r=>setTimeout(r,50));return window.CampusBackend};
     const backend=await wait(),form=document.getElementById('feedbackForm'),status=document.getElementById('status'),submit=document.getElementById('submit');
+    const session=await backend?.session();
+    if(session)status.textContent=`已登入：${session.user.user_metadata?.full_name||session.user.email}。這次回饋會顯示給管理者。`;
+    else status.textContent='目前以匿名方式回饋；登入後可讓管理者辨識你的回報。';
     const read=file=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)});
     form.onsubmit=async event=>{
       event.preventDefault();
