@@ -206,7 +206,7 @@
         const images = [...new Set([
           ...(Array.isArray(p.menuImages) ? p.menuImages : []),
           p.menu,
-        ].map(valid).filter(Boolean))];
+        ].map(url => valid(url) ? url : '').filter(Boolean))];
         const image = images[0];
         const menu = text
           ? `<section class="section"><h2>店家菜單</h2><div class="text-menu">${escape(text)}</div><p class="empty" style="margin-top:10px;font-size:13px">菜單由管理者整理，出發前建議再次確認。</p></section>`
