@@ -55,6 +55,13 @@ if (!config?.url || !config?.anonKey) {
       if (removed.length) result(await client.from('places').delete().in('id', removed));
       return places;
     },
+    async getCandidates() {
+      const rows = result(await client.from('pending_candidates').select('id, data').order('created_at', { ascending: true }));
+      return (rows || []).map(row => ({ ...row.data, id: row.id }));
+    },
+    async removeCandidate(id) {
+      result(await client.from('pending_candidates').delete().eq('id', id));
+    },
     async uploadMenuImage(file, placeId) {
       const session = await this.session();
       if (!session) throw new Error('請先登入管理員帳號。');
@@ -101,4 +108,3 @@ if (!config?.url || !config?.anonKey) {
     }
   };
 }
-
