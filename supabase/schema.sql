@@ -26,8 +26,13 @@ create table if not exists public.feedback (
   message text not null check (char_length(message) between 1 and 2000),
   menu_image text,
   menu_file_name text,
+  reporter_name text,
+  reporter_email text,
   created_at timestamptz not null default now()
 );
+
+alter table public.feedback add column if not exists reporter_name text;
+alter table public.feedback add column if not exists reporter_email text;
 
 -- 前台登入使用者的店家確認紀錄：公開只看得到確認時間與狀況，不公開確認者身分。
 create table if not exists public.place_confirmations (
