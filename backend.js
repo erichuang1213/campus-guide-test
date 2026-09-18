@@ -55,6 +55,18 @@ if (!config?.url || !config?.anonKey) {
       if (removed.length) result(await client.from('places').delete().in('id', removed));
       return places;
     },
+    async uploadMenuImage(file, placeId) {
+      const session = await this.session();
+      if (!session) throw new Error('請先登入管理員帳號。');
+      const extension = (file.name.split('.').pop() || 'jpg').replace(/[^a-z0-9]/gi, '').toLowerCase();
+      const path = `${session.user.id}/${placeId}/${crypto.randomUUID()}.${extension}`;
+      result(await client.storage.from('menu-images').upload(path, file, {
+        contentType: file.type || 'image/jpeg',
+        cacheControl: '3600',
+        upsert: false
+      }));
+      return client.storage.from('menu-images').getPublicUrl(path).data.publicUrl;
+    },
     async getSettings() {
       const row = result(await client.from('site_settings').select('custom_tags').eq('id', 1).maybeSingle());
       return row?.custom_tags || [];
