@@ -11,7 +11,9 @@ const login=note=>{main.innerHTML=`<section class="head"><h1>回饋管理登入<
 if(backend?.enabled&&await backend.session()&&await backend.isAdmin()){
   const data=await backend.getFeedback();
   document.getElementById('count').textContent=`共 ${data.length} 則回饋`;
-  document.getElementById('list').innerHTML=data.length?data.map(x=>`<article class="item"><span class="type">${x.type}</span><p>${x.message}</p>${x.menu_image?`<p><strong>附上菜單：</strong>${x.menu_file_name||'菜單圖片'}</p><img src="${x.menu_image}" alt="使用者附上的菜單" style="display:block;max-width:100%;max-height:480px;border:1px solid var(--line);border-radius:9px">`:''}<small>${new Date(x.created_at).toLocaleString('zh-TW')}</small></article>`).join(''):'<div class="empty">尚未收到回饋。</div>';
+  const identity=x=>x.reporter_name?`已登入使用者：${x.reporter_name}`:x.reporter_email?`已登入使用者：${x.reporter_email.replace(/(^.).*(@.*$)/,'$1***$2')}`:'匿名使用者';
+  document.getElementById('list').innerHTML=data.length?data.map(x=>`<article class="item"><span class="type">${x.type}</span><p>${x.message}</p>${x.menu_image?`<p><strong>附上菜單：</strong>${x.menu_file_name||'菜單圖片'}</p><img src="${x.menu_image}" alt="使用者附上的菜單" style="display:block;max-width:100%;max-height:480px;border:1px solid var(--line);border-radius:9px">`:''}<small>${identity(x)}・${new Date(x.created_at).toLocaleString('zh-TW')}</small></article>`).join(''):'<div class="empty">尚未收到回饋。</div>';
   document.getElementById('clear').onclick=async()=>{if(!confirm('確定清空所有雲端回饋？此動作無法復原。'))return;const button=document.getElementById('clear');button.disabled=true;button.textContent='清空中…';try{await backend.clearFeedback();document.getElementById('count').textContent='已清空回饋。';document.getElementById('list').innerHTML='<div class="empty">尚未收到回饋。</div>'}catch(error){button.disabled=false;button.textContent='清空目前回饋';document.getElementById('count').textContent=`無法清空：${error.message||'請確認管理員權限'}`;}};
 }else if(backend?.enabled)login();else main.innerHTML='<section class="head"><h1>回饋管理</h1><p>雲端後台尚未完成設定。</p></section>';
 </script></body></html>
+
