@@ -421,9 +421,9 @@ const startAdmin = async () => {
     if (remoteTags.length) { customTags = remoteTags; tags = [...defaultTags, ...customTags]; renderTagChoices(); }
     const loginInfo = document.createElement('div');
     loginInfo.className = 'status'; loginInfo.style.marginBottom = '12px';
-    loginInfo.innerHTML = `已登入雲端管理後台。所有儲存會同步到公開首頁。 <button type="button" class="secondary" id="cloudLogout">登出</button>`;
+    loginInfo.innerHTML = `已登入雲端管理後台。所有儲存會同步到公開首頁。 <button type="button" class="secondary" id="cloudRefresh">↻ 刷新資料</button>`;
     document.querySelector('.layout').before(loginInfo);
-    document.getElementById('cloudLogout').onclick = async () => { await backend.signOut(); location.reload(); };
+    document.getElementById('cloudRefresh').onclick = () => location.reload();
     gate.remove(); document.getElementById('status').textContent = '已連上雲端資料庫。';
   } catch (error) { message(`無法啟用後台：${error.message}`); }
 };
@@ -436,3 +436,4 @@ menuAdminLink.href='menus.html';
 menuAdminLink.textContent='菜單管理';
 document.querySelector('.admin-links').append(menuAdminLink);
 </script></body></html>
+
