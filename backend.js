@@ -63,11 +63,15 @@ if (!config?.url || !config?.anonKey) {
       result(await client.from('site_settings').upsert({ id: 1, custom_tags: customTags }, { onConflict: 'id' }));
     },
     async submitFeedback(feedback) {
+      const session = await this.session();
+      const user = session?.user;
       result(await client.from('feedback').insert({
         type: feedback.type,
         message: feedback.text,
         menu_image: feedback.menuImage || null,
-        menu_file_name: feedback.menuFileName || null
+        menu_file_name: feedback.menuFileName || null,
+        reporter_name: user?.user_metadata?.full_name || user?.user_metadata?.name || null,
+        reporter_email: user?.email || null
       }));
     },
     async getFeedback() {
