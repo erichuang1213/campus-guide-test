@@ -1,2 +1,390 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>菜單管理｜校邊好去處</title><style>:root{--ink:#1b2a28;--muted:#667085;--paper:#fffdf8;--line:#e8e2d7;--brand:#176b5b;--soft:#f3f7f4;--danger:#b93815}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 system-ui,"Noto Sans TC",sans-serif}.shell{max-width:1100px;margin:auto;padding:0 28px}nav{height:76px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.logo{font-size:20px;font-weight:800}.logo b,a{color:var(--brand)}a{font-weight:700;text-decoration:none}.head{padding:40px 0 24px}.head h1{font-size:34px;margin:0 0 7px}.head p,.sub,.hint{margin:0;color:var(--muted)}.layout{display:grid;grid-template-columns:.8fr 1.2fr;gap:24px;align-items:start}.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:21px}.panel h2{font-size:19px;margin:0 0 5px}.sub{margin-bottom:16px;font-size:14px}.list{display:grid;gap:9px;max-height:650px;overflow:auto}.store{width:100%;text-align:left;border:1px solid var(--line);border-radius:10px;background:#fff;padding:12px;cursor:pointer;font:inherit}.store.active,.store:hover{border-color:var(--brand);background:var(--soft)}.store strong{display:block}.store small{color:var(--muted)}.upload{display:flex;align-items:center;justify-content:center;min-height:88px;border:1px dashed #9ebfb4;border-radius:12px;background:var(--soft);color:var(--brand);cursor:pointer;text-align:center;padding:14px;font-weight:800}.upload input{display:none}.hint{font-size:13px;margin:10px 0}.preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:16px 0}.page{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}.page img{display:block;width:100%;height:156px;object-fit:contain;background:#f5f5f2}.page span{display:block;padding:7px 9px;font-size:12px;color:var(--muted)}.remove-one{position:absolute;right:7px;top:7px;border:0;border-radius:999px;background:rgba(33,35,34,.86);color:#fff;width:28px;height:28px;font-size:16px;cursor:pointer}.empty{padding:30px;text-align:center;border:1px dashed var(--line);border-radius:12px;color:var(--muted)}.actions{display:flex;gap:10px;flex-wrap:wrap}.primary,.secondary{font:inherit;font-weight:800;border-radius:9px;padding:10px 14px;cursor:pointer}.primary{border:0;background:var(--brand);color:#fff}.primary:disabled{opacity:.6}.secondary{border:1px solid var(--line);background:#fff;color:var(--danger)}.status{min-height:24px;color:var(--brand);margin-top:12px;font-size:14px}.error{color:var(--danger)}@media(max-width:760px){.shell{padding:0 18px}.layout{grid-template-columns:1fr}.list{max-height:300px}.preview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}</style></head><body><nav class="shell"><div class="logo">校邊<b>好去處</b> <small>管理後台</small></div><a href="admin.html">← 返回店家管理</a></nav><main class="shell" id="app"><section class="head"><h1>菜單管理</h1><p>正在確認管理權限…</p></section></main><script src="supabase-config.js"></script><script type="module" src="backend.js"></script><script type="module">const app=document.getElementById('app'),wait=async()=>{for(let i=0;i<50&&!window.CampusBackend;i++)await new Promise(r=>setTimeout(r,50));return window.CampusBackend},esc=v=>String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const backend=await wait();const login=note=>{app.innerHTML=`<section class="head"><h1>菜單管理登入</h1><p>${esc(note||'請使用管理員帳號登入。')}</p></section><form class="panel" id="login" style="max-width:440px;display:grid;gap:13px"><label>電子信箱<input id="email" type="email" required></label><label>密碼<input id="password" type="password" required></label><button class="primary">登入</button><span class="status" id="loginStatus"></span></form>`;document.getElementById('login').onsubmit=async e=>{e.preventDefault();const out=document.getElementById('loginStatus');try{await backend.signIn(email.value,password.value);if(!await backend.isAdmin())throw Error('此帳號沒有管理權限。');location.reload()}catch(x){out.textContent=x.message||'無法登入。';out.className='status error'}}};if(!backend?.enabled)login('雲端後台尚未完成設定。');else if(!await backend.session()||!await backend.isAdmin())login();else{let places=await backend.getPlaces(),selected=0,images=[];const source=p=>[...(Array.isArray(p.menuImages)?p.menuImages:[]),p.menu].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i);const render=(notice='')=>{const p=places[selected];images=source(p);app.innerHTML=`<section class="head"><h1>菜單管理</h1><p>每間店可建立多張菜單頁面；前台會以「第 1 張、第 2 張」讓使用者切換閱讀。</p></section><section class="layout"><section class="panel"><h2>選擇店家</h2><p class="sub">共 ${places.length} 間店家</p><div class="list">${places.map((x,i)=>`<button class="store ${i===selected?'active':''}" data-index="${i}"><strong>${esc(x.name)}</strong><small>${source(x).length?`已有 ${source(x).length} 張菜單`:'尚未上傳菜單'}</small></button>`).join('')}</div></section><section class="panel"><h2>${esc(p.name)} 的菜單</h2><p class="sub">可一次選取多張 JPG、PNG、WebP 圖片；每張限 3 MB，最多 8 張。</p><label class="upload">＋ 選擇菜單圖片（可多選）<input id="menuFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple></label><div class="preview-grid" id="previews">${images.length?images.map((url,i)=>`<div class="page"><img src="${url}" alt="第 ${i+1} 張菜單"><button class="remove-one" data-remove="${i}" aria-label="移除第 ${i+1} 張">×</button><span>第 ${i+1} 張</span></div>`).join(''):'<div class="empty">尚未上傳菜單圖片</div>'}</div><p class="hint">圖片會先保留在此頁，按「儲存全部變更」才會同步公開前台。</p><div class="actions"><button class="primary" id="save">儲存全部變更</button><button class="secondary" id="removeAll">移除全部菜單</button></div><div class="status" id="status">${notice}</div></section></section>`;document.querySelectorAll('.store').forEach(b=>b.onclick=()=>{selected=Number(b.dataset.index);render()});const redraw=()=>{const box=document.getElementById('previews');box.innerHTML=images.length?images.map((url,i)=>`<div class="page"><img src="${url}" alt="第 ${i+1} 張菜單"><button class="remove-one" data-remove="${i}">×</button><span>第 ${i+1} 張</span></div>`).join(''):'<div class="empty">尚未上傳菜單圖片</div>';box.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{images.splice(Number(b.dataset.remove),1);redraw()})};document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{images.splice(Number(b.dataset.remove),1);redraw()});document.getElementById('menuFiles').onchange=async e=>{const status=document.getElementById('status'),files=[...e.target.files];if(images.length+files.length>8){status.textContent='每間店最多 8 張菜單圖片。';status.className='status error';return}let added=0;for(const file of files){if(file.size>3*1024*1024){status.textContent=`「${file.name}」超過 3 MB，沒有加入。`;status.className='status error';continue}images.push(await new Promise((ok,bad)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=bad;r.readAsDataURL(file)}));added++}redraw();status.textContent=`已加入 ${added} 張待儲存圖片。`;status.className='status';e.target.value=''};document.getElementById('save').onclick=async()=>{const status=document.getElementById('status'),button=document.getElementById('save');button.disabled=true;status.textContent='正在儲存並同步前台…';try{p.menuImages=[...images];p.menu=images[0]||'';p.menuText='';await backend.syncPlaces(places);const link='place.html?name='+encodeURIComponent(p.name);render(`已儲存 ${images.length} 張菜單，前台已同步。<a href="${link}" target="_blank">開啟公開店家頁確認 →</a>`)}catch(x){status.textContent='儲存失敗：'+(x.message||'請稍後再試');status.className='status error';button.disabled=false}};document.getElementById('removeAll').onclick=()=>{if(confirm('確定移除這間店的全部菜單圖片？')){images=[];redraw();document.getElementById('status').textContent='已清空暫存，請按「儲存全部變更」完成同步。'}}};render()}</script></body></html>
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>菜單管理｜校邊好去處</title>
+    <style>
+      :root {
+        --ink: #1b2a28;
+        --muted: #667085;
+        --paper: #fffdf8;
+        --line: #e8e2d7;
+        --brand: #176b5b;
+        --soft: #f3f7f4;
+        --danger: #b93815;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font:
+          16px/1.6 system-ui,
+          "Noto Sans TC",
+          sans-serif;
+      }
+      .shell {
+        max-width: 1100px;
+        margin: auto;
+        padding: 0 28px;
+      }
+      nav {
+        height: 76px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--line);
+      }
+      .logo {
+        font-size: 20px;
+        font-weight: 800;
+      }
+      .logo b,
+      a {
+        color: var(--brand);
+      }
+      a {
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .head {
+        padding: 40px 0 24px;
+      }
+      .head h1 {
+        font-size: 34px;
+        margin: 0 0 7px;
+      }
+      .head p,
+      .sub,
+      .hint {
+        margin: 0;
+        color: var(--muted);
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 0.8fr 1.2fr;
+        gap: 24px;
+        align-items: start;
+      }
+      .panel {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 21px;
+      }
+      .panel h2 {
+        font-size: 19px;
+        margin: 0 0 5px;
+      }
+      .sub {
+        margin-bottom: 16px;
+        font-size: 14px;
+      }
+      .list {
+        display: grid;
+        gap: 9px;
+        max-height: 650px;
+        overflow: auto;
+      }
+      .store {
+        width: 100%;
+        text-align: left;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        padding: 12px;
+        cursor: pointer;
+        font: inherit;
+      }
+      .store.active,
+      .store:hover {
+        border-color: var(--brand);
+        background: var(--soft);
+      }
+      .store strong {
+        display: block;
+      }
+      .store small {
+        color: var(--muted);
+      }
+      .upload {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 88px;
+        border: 1px dashed #9ebfb4;
+        border-radius: 12px;
+        background: var(--soft);
+        color: var(--brand);
+        cursor: pointer;
+        text-align: center;
+        padding: 14px;
+        font-weight: 800;
+      }
+      .upload input {
+        display: none;
+      }
+      .hint {
+        font-size: 13px;
+        margin: 10px 0;
+      }
+      .preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+        margin: 16px 0;
+      }
+      .page {
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fff;
+      }
+      .page img {
+        display: block;
+        width: 100%;
+        height: 156px;
+        object-fit: contain;
+        background: #f5f5f2;
+      }
+      .page span {
+        display: block;
+        padding: 7px 9px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .remove-one {
+        position: absolute;
+        right: 7px;
+        top: 7px;
+        border: 0;
+        border-radius: 999px;
+        background: rgba(33, 35, 34, 0.86);
+        color: #fff;
+        width: 28px;
+        height: 28px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      .empty {
+        padding: 30px;
+        text-align: center;
+        border: 1px dashed var(--line);
+        border-radius: 12px;
+        color: var(--muted);
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .primary,
+      .secondary {
+        font: inherit;
+        font-weight: 800;
+        border-radius: 9px;
+        padding: 10px 14px;
+        cursor: pointer;
+      }
+      .primary {
+        border: 0;
+        background: var(--brand);
+        color: #fff;
+      }
+      .primary:disabled {
+        opacity: 0.6;
+      }
+      .secondary {
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--danger);
+      }
+      .status {
+        min-height: 24px;
+        color: var(--brand);
+        margin-top: 12px;
+        font-size: 14px;
+      }
+      .error {
+        color: var(--danger);
+      }
+      @media (max-width: 760px) {
+        .shell {
+          padding: 0 18px;
+        }
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        .list {
+          max-height: 300px;
+        }
+        .preview-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="shell">
+      <div class="logo">校邊<b>好去處</b> <small>管理後台</small></div>
+      <a href="admin.html">← 返回店家管理</a>
+    </nav>
+    <main class="shell" id="app">
+      <section class="head">
+        <h1>菜單管理</h1>
+        <p>正在確認管理權限…</p>
+      </section>
+    </main>
+    <script src="supabase-config.js"></script>
+    <script type="module" src="backend.js"></script>
+    <script type="module">
+      const app = document.getElementById("app"),
+        wait = async () => {
+          for (let i = 0; i < 50 && !window.CampusBackend; i++)
+            await new Promise((r) => setTimeout(r, 50));
+          return window.CampusBackend;
+        },
+        esc = (v) =>
+          String(v || "").replace(
+            /[&<>"']/g,
+            (c) =>
+              ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;",
+              })[c],
+          );
+      const backend = await wait();
+      const login = (note) => {
+        app.innerHTML = `<section class="head"><h1>菜單管理登入</h1><p>${esc(note || "請使用管理員帳號登入。")}</p></section><form class="panel" id="login" style="max-width:440px;display:grid;gap:13px"><label>電子信箱<input id="email" type="email" required></label><label>密碼<input id="password" type="password" required></label><button class="primary">登入</button><span class="status" id="loginStatus"></span></form>`;
+        document.getElementById("login").onsubmit = async (e) => {
+          e.preventDefault();
+          const out = document.getElementById("loginStatus");
+          try {
+            await backend.signIn(email.value, password.value);
+            if (!(await backend.isAdmin())) throw Error("此帳號沒有管理權限。");
+            location.reload();
+          } catch (x) {
+            out.textContent = x.message || "無法登入。";
+            out.className = "status error";
+          }
+        };
+      };
+      if (!backend?.enabled) login("雲端後台尚未完成設定。");
+      else if (!(await backend.session()) || !(await backend.isAdmin()))
+        login();
+      else {
+        let places = await backend.getPlaces(),
+          selected = 0,
+          images = [];
+        const source = (p) =>
+          [...(Array.isArray(p.menuImages) ? p.menuImages : []), p.menu]
+            .filter(Boolean)
+            .filter((x, i, a) => a.indexOf(x) === i);
+        const render = (notice = "") => {
+          const p = places[selected];
+          images = source(p);
+          app.innerHTML = `<section class="head"><h1>菜單管理</h1><p>每間店可建立多張菜單頁面；前台會以「第 1 張、第 2 張」讓使用者切換閱讀。</p></section><section class="layout"><section class="panel"><h2>選擇店家</h2><p class="sub">共 ${places.length} 間店家</p><div class="list">${places.map((x, i) => `<button class="store ${i === selected ? "active" : ""}" data-index="${i}"><strong>${esc(x.name)}</strong><small>${source(x).length ? `已有 ${source(x).length} 張菜單` : "尚未上傳菜單"}</small></button>`).join("")}</div></section><section class="panel"><h2>${esc(p.name)} 的菜單</h2><p class="sub">可一次選取多張 JPG、PNG、WebP 圖片；每張限 10 MB，最多 8 張。</p><label class="upload">＋ 選擇菜單圖片（可多選）<input id="menuFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple></label><div class="preview-grid" id="previews">${images.length ? images.map((url, i) => `<div class="page"><img src="${url}" alt="第 ${i + 1} 張菜單"><button class="remove-one" data-remove="${i}" aria-label="移除第 ${i + 1} 張">×</button><span>第 ${i + 1} 張</span></div>`).join("") : '<div class="empty">尚未上傳菜單圖片</div>'}</div><p class="hint">圖片會先保留在此頁，按「儲存全部變更」才會同步公開前台。</p><div class="actions"><button class="primary" id="save">儲存全部變更</button><button class="secondary" id="removeAll">移除全部菜單</button></div><div class="status" id="status">${notice}</div></section></section>`;
+          document.querySelectorAll(".store").forEach(
+            (b) =>
+              (b.onclick = () => {
+                selected = Number(b.dataset.index);
+                render();
+              }),
+          );
+          const redraw = () => {
+            const box = document.getElementById("previews");
+            box.innerHTML = images.length
+              ? images
+                  .map(
+                    (url, i) =>
+                      `<div class="page"><img src="${url}" alt="第 ${i + 1} 張菜單"><button class="remove-one" data-remove="${i}">×</button><span>第 ${i + 1} 張</span></div>`,
+                  )
+                  .join("")
+              : '<div class="empty">尚未上傳菜單圖片</div>';
+            box.querySelectorAll("[data-remove]").forEach(
+              (b) =>
+                (b.onclick = () => {
+                  images.splice(Number(b.dataset.remove), 1);
+                  redraw();
+                }),
+            );
+          };
+          document.querySelectorAll("[data-remove]").forEach(
+            (b) =>
+              (b.onclick = () => {
+                images.splice(Number(b.dataset.remove), 1);
+                redraw();
+              }),
+          );
+          document.getElementById("menuFiles").onchange = async (e) => {
+            const status = document.getElementById("status"),
+              files = [...e.target.files];
+            if (images.length + files.length > 8) {
+              status.textContent = "每間店最多 8 張菜單圖片。";
+              status.className = "status error";
+              return;
+            }
+            let added = 0;
+            for (const file of files) {
+              if (file.size > 10 * 1024 * 1024) {
+                status.textContent = `「${file.name}」超過 10 MB，沒有加入。`;
+                status.className = "status error";
+                continue;
+              }
+              images.push(
+                await new Promise((ok, bad) => {
+                  const r = new FileReader();
+                  r.onload = () => ok(r.result);
+                  r.onerror = bad;
+                  r.readAsDataURL(file);
+                }),
+              );
+              added++;
+            }
+            redraw();
+            status.textContent = `已加入 ${added} 張待儲存圖片。`;
+            status.className = "status";
+            e.target.value = "";
+          };
+          document.getElementById("save").onclick = async () => {
+            const status = document.getElementById("status"),
+              button = document.getElementById("save");
+            button.disabled = true;
+            status.textContent = "正在儲存並同步前台…";
+            try {
+              p.menuImages = [...images];
+              p.menu = images[0] || "";
+              p.menuText = "";
+              await backend.syncPlaces(places);
+              const link = "place.html?name=" + encodeURIComponent(p.name);
+              render(
+                `已儲存 ${images.length} 張菜單，前台已同步。<a href="${link}" target="_blank">開啟公開店家頁確認 →</a>`,
+              );
+            } catch (x) {
+              status.textContent = "儲存失敗：" + (x.message || "請稍後再試");
+              status.className = "status error";
+              button.disabled = false;
+            }
+          };
+          document.getElementById("removeAll").onclick = () => {
+            if (confirm("確定移除這間店的全部菜單圖片？")) {
+              images = [];
+              redraw();
+              document.getElementById("status").textContent =
+                "已清空暫存，請按「儲存全部變更」完成同步。";
+            }
+          };
+        };
+        render();
+      }
+    </script>
+  </body>
+</html>
 
