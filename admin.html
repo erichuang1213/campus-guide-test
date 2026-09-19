@@ -381,9 +381,10 @@ const waitForBackend = async () => {
 };
 const backend = await waitForBackend();
 const gate = document.createElement('div');
-gate.style.cssText = 'position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:20px;background:#fffdf8';
+gate.style.cssText = 'position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:20px;background:rgba(255,253,248,.34);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)';
 const panel = document.createElement('section');
-panel.style.cssText = 'width:min(430px,100%);padding:28px;background:#fffdf8;border-radius:18px;box-shadow:0 20px 60px #0005';
+panel.style.cssText = 'display:grid;place-items:center;width:76px;height:76px;border-radius:50%;background:rgba(255,255,255,.34);border:1px solid rgba(255,255,255,.7)';
+panel.innerHTML = '<span style="width:30px;height:30px;border:3px solid rgba(23,107,91,.22);border-top-color:#176b5b;border-radius:50%;animation:campusSpin .75s linear infinite"></span><style>@keyframes campusSpin{to{transform:rotate(360deg)}}</style>';
 gate.append(panel); document.body.append(gate);
 const message = text => { panel.innerHTML = `<h2 style="margin:0 0 8px">管理後台</h2><p style="color:#667085">${text}</p>`; };
 const showLogin = (note = '請使用管理員帳號登入。') => {
@@ -436,3 +437,4 @@ menuAdminLink.href='menus.html';
 menuAdminLink.textContent='菜單管理';
 document.querySelector('.admin-links').append(menuAdminLink);
 </script></body></html>
+
