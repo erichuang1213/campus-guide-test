@@ -1,19 +1,43 @@
 <!doctype html>
-<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>回饋管理｜校邊好去處</title><style>
-:root{--ink:#1f2933;--muted:#667085;--paper:#fffdf8;--line:#e8e2d7;--brand:#176b5b;--soft:#f7f4ec}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.55 ui-sans-serif,system-ui,"Noto Sans TC",Arial,sans-serif}.shell{max-width:940px;margin:auto;padding:0 28px}nav{height:74px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.logo{font-size:20px;font-weight:800}.logo b,a{color:var(--brand)}a{font-weight:700;text-decoration:none}.head{padding:42px 0 23px}.head h1{font-size:32px;letter-spacing:-1px;margin:0 0 5px}.head p{margin:0;color:var(--muted)}.toolbar{display:flex;justify-content:space-between;align-items:center;margin:20px 0}.toolbar button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 11px;color:var(--muted);font:inherit;cursor:pointer}.list{display:grid;gap:12px}.item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px}.type{display:inline-block;background:#e3f2e9;color:var(--brand);font-size:13px;font-weight:700;border-radius:999px;padding:4px 8px}.item p{margin:10px 0 6px;white-space:pre-wrap}.item small{color:var(--muted)}.empty{padding:38px;text-align:center;background:var(--soft);border-radius:14px;color:var(--muted)}
-</style></head><body><nav class="shell"><div class="logo">校邊<b>好去處</b> <small>管理後台</small></div><a href="admin.html">← 返回管理總覽</a></nav><main class="shell"><section class="head"><h1>回饋管理</h1><p>查看使用者回報的錯誤資訊、新店推薦與功能建議。</p></section><div class="toolbar"><span id="count"></span><button id="clear">清空目前回饋</button></div><section class="list" id="list"></section></main><script>
-const list=document.getElementById('list'),count=document.getElementById('count');function render(){const data=JSON.parse(localStorage.getItem('campusGuideFeedback')||'[]');count.textContent=`共 ${data.length} 則回饋`;list.innerHTML=data.length?data.map(x=>`<article class="item"><span class="type">${x.type}</span><p>${x.text}</p>${x.menuImage?`<p><strong>附上菜單：</strong>${x.menuFileName||'菜單圖片'}</p><img src="${x.menuImage}" alt="使用者附上的菜單" style="display:block;max-width:100%;max-height:480px;border:1px solid var(--line);border-radius:9px">`:''}<small>${x.createdAt}</small></article>`).join(''):'<div class="empty">尚未收到回饋。使用者可從首頁底部提交意見。</div>'}document.getElementById('clear').onclick=()=>{if(confirm('確定清空目前瀏覽器內的所有回饋？')){localStorage.removeItem('campusGuideFeedback');render()}};render();
-</script><script src="supabase-config.js"></script><script type="module" src="backend.js?v=feedback-identity-1"></script><script type="module">
-const waitForBackend=async()=>{for(let i=0;i<50&&!window.CampusBackend;i++)await new Promise(r=>setTimeout(r,50));return window.CampusBackend};
-const backend=await waitForBackend();
-const main=document.querySelector('main');
-const login=note=>{main.innerHTML=`<section class="head"><h1>回饋管理登入</h1><p>${note||'請使用管理員帳號登入。'}</p></section><form id="login" style="display:grid;gap:12px;max-width:410px"><input id="email" type="email" placeholder="電子信箱" required><input id="password" type="password" placeholder="密碼" minlength="6" required><button>登入</button><small id="status"></small></form>`;const go=async()=>{try{const email=document.getElementById('email').value,password=document.getElementById('password').value;await backend.signIn(email,password);await backend.claimAdmin();location.reload()}catch(e){document.getElementById('status').textContent=e.message||'無法登入'}};document.getElementById('login').onsubmit=e=>{e.preventDefault();go()}};
-if(backend?.enabled&&await backend.session()&&await backend.isAdmin()){
-  const data=await backend.getFeedback();
-  document.getElementById('count').textContent=`共 ${data.length} 則回饋`;
-  const identity=x=>x.reporter_name?`已登入使用者：${x.reporter_name}`:x.reporter_email?`已登入使用者：${x.reporter_email.replace(/(^.).*(@.*$)/,'$1***$2')}`:'匿名使用者';
-  document.getElementById('list').innerHTML=data.length?data.map(x=>`<article class="item"><span class="type">${x.type}</span><p>${x.message}</p>${x.menu_image?`<p><strong>附上菜單：</strong>${x.menu_file_name||'菜單圖片'}</p><img src="${x.menu_image}" alt="使用者附上的菜單" style="display:block;max-width:100%;max-height:480px;border:1px solid var(--line);border-radius:9px">`:''}<small>${identity(x)}・${new Date(x.created_at).toLocaleString('zh-TW')}</small></article>`).join(''):'<div class="empty">尚未收到回饋。</div>';
-  document.getElementById('clear').onclick=async()=>{if(!confirm('確定清空所有雲端回饋？此動作無法復原。'))return;const button=document.getElementById('clear');button.disabled=true;button.textContent='清空中…';try{await backend.clearFeedback();document.getElementById('count').textContent='已清空回饋。';document.getElementById('list').innerHTML='<div class="empty">尚未收到回饋。</div>'}catch(error){button.disabled=false;button.textContent='清空目前回饋';document.getElementById('count').textContent=`無法清空：${error.message||'請確認管理員權限'}`;}};
-}else if(backend?.enabled)login();else main.innerHTML='<section class="head"><h1>回饋管理</h1><p>雲端後台尚未完成設定。</p></section>';
-</script></body></html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>回饋管理｜校邊好去處</title>
+  <style>
+    :root{--ink:#1f2933;--muted:#667085;--paper:#fffdf8;--line:#e8e2d7;--brand:#176b5b;--soft:#f7f4ec;--warn:#956d12}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.55 ui-sans-serif,system-ui,"Noto Sans TC",Arial,sans-serif}.shell{max-width:940px;margin:auto;padding:0 28px}nav{height:74px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.logo{font-size:20px;font-weight:800}.logo b,a{color:var(--brand)}a{font-weight:700;text-decoration:none}.head{padding:42px 0 23px}.head h1{font-size:32px;letter-spacing:-1px;margin:0 0 5px}.head p{margin:0;color:var(--muted)}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:20px 0}.toolbar button,.status-select{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 11px;color:var(--muted);font:inherit;cursor:pointer}.list{display:grid;gap:12px}.item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px}.item-head{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.type,.state{display:inline-block;font-size:13px;font-weight:700;border-radius:999px;padding:4px 8px}.type{background:#e3f2e9;color:var(--brand)}.state.pending{background:#f5f0df;color:var(--warn)}.state.working{background:#e7eef9;color:#3f6097}.state.done{background:#e3f2e9;color:var(--brand)}.item p{margin:10px 0 6px;white-space:pre-wrap}.item small{color:var(--muted)}.meta{display:grid;gap:3px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}.empty{padding:38px;text-align:center;background:var(--soft);border-radius:14px;color:var(--muted)}.login{display:grid;gap:12px;max-width:410px}.login input{font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px}.login button{font:inherit;border:0;border-radius:8px;background:var(--brand);color:#fff;padding:10px;font-weight:700}@media(max-width:600px){.shell{padding:0 18px}.toolbar{align-items:flex-start;flex-direction:column}}
+  </style>
+</head>
+<body>
+  <nav class="shell"><div class="logo">校邊<b>好去處</b> <small>管理後台</small></div><a href="admin.html">← 返回管理總覽</a></nav>
+  <main class="shell" id="main"><section class="head"><h1>回饋管理</h1><p>查看使用者回報、追蹤處理進度並維護店家資訊。</p></section><div class="toolbar"><span id="count">正在讀取回饋…</span><button id="clear">清空目前回饋</button></div><section class="list" id="list"></section></main>
+  <script src="supabase-config.js"></script>
+  <script type="module" src="backend.js?v=feedback-workflow-1"></script>
+  <script type="module">
+    const wait=async()=>{for(let i=0;i<50&&!window.CampusBackend;i++)await new Promise(resolve=>setTimeout(resolve,50));return window.CampusBackend};
+    const backend=await wait(),main=document.getElementById('main');
+    const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    const identity=item=>item.reporter_name?`已登入使用者：${item.reporter_name}`:item.reporter_email?`已登入使用者：${item.reporter_email.replace(/(^.).*(@.*$)/,'$1***$2')}`:'匿名使用者';
+    const label=status=>({待處理:'待處理',處理中:'處理中',已完成:'已完成'}[status]||'待處理');
+    const stateClass=status=>status==='已完成'?'done':status==='處理中'?'working':'pending';
+    const showLogin=note=>{
+      main.innerHTML=`<section class="head"><h1>回饋管理登入</h1><p>${esc(note||'請使用管理員帳號登入。')}</p></section><form class="login" id="login"><input id="email" type="email" placeholder="電子信箱" required><input id="password" type="password" placeholder="密碼" minlength="6" required><button>登入</button><small id="loginStatus"></small></form>`;
+      document.getElementById('login').onsubmit=async event=>{event.preventDefault();const status=document.getElementById('loginStatus');try{await backend.signIn(email.value,password.value);if(!await backend.isAdmin())throw Error('此帳號沒有管理權限。');location.reload()}catch(error){status.textContent=error.message||'無法登入。'}};
+    };
+    const start=async()=>{
+      const list=document.getElementById('list'),count=document.getElementById('count');
+      const render=async()=>{
+        const data=await backend.getFeedback();
+        count.textContent=`共 ${data.length} 則回饋`;
+        list.innerHTML=data.length?data.map(item=>`<article class="item"><div class="item-head"><div><span class="type">${esc(item.type)}</span>${item.place_name?` <span class="state">店家：${esc(item.place_name)}</span>`:''}</div><label><span class="state ${stateClass(item.status)}">${label(item.status)}</span><select class="status-select" data-id="${esc(item.id)}" aria-label="更新處理狀態"><option value="待處理" ${item.status==='待處理'?'selected':''}>待處理</option><option value="處理中" ${item.status==='處理中'?'selected':''}>處理中</option><option value="已完成" ${item.status==='已完成'?'selected':''}>已完成</option></select></label></div><p>${esc(item.message)}</p>${item.menu_image?`<p><strong>附上菜單：</strong>${esc(item.menu_file_name||'菜單圖片')}</p><img src="${esc(item.menu_image)}" alt="使用者附上的菜單" style="display:block;max-width:100%;max-height:480px;border:1px solid var(--line);border-radius:9px">`:''}<div class="meta"><small>${esc(identity(item))}・${new Date(item.created_at).toLocaleString('zh-TW')}</small>${item.resolved_at?`<small>完成時間：${new Date(item.resolved_at).toLocaleString('zh-TW')}</small>`:''}</div></article>`).join(''):'<div class="empty">尚未收到回饋。</div>';
+        list.querySelectorAll('.status-select').forEach(select=>select.onchange=async()=>{const before=select.value;select.disabled=true;try{await backend.updateFeedbackStatus(select.dataset.id,before);await render();}catch(error){select.disabled=false;count.textContent='更新失敗：'+(error.message||'請確認管理員權限。');}});
+      };
+      await render();
+      document.getElementById('clear').onclick=async()=>{if(!confirm('確定清空所有雲端回饋？此動作無法復原。'))return;const button=document.getElementById('clear');button.disabled=true;button.textContent='清空中…';try{await backend.clearFeedback();await render();}catch(error){count.textContent='無法清空：'+(error.message||'請確認管理員權限。');}finally{button.disabled=false;button.textContent='清空目前回饋';}};
+    };
+    if(!backend?.enabled)main.innerHTML='<section class="head"><h1>回饋管理</h1><p>雲端後台尚未完成設定。</p></section>';
+    else if(!await backend.session()||!await backend.isAdmin())showLogin();
+    else start().catch(error=>{main.innerHTML=`<section class="head"><h1>回饋管理</h1><p>無法載入：${esc(error.message)}</p></section>`});
+  </script>
+</body>
+</html>
 
