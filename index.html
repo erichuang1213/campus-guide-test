@@ -63,7 +63,7 @@
       {name:'日光甜點室',icon:'🍰',tone:'tone-5',distance:'步行 10 分鐘',hours:'營業至 18:00',price:'$110–220',tags:['甜點','咖啡','可內用','讀書'],desc:'採光好、甜點每日更換；週末人多，不建議長時間讀書。',updated:'3 天前'},
       {name:'阿伯便當',icon:'🥡',tone:'tone-6',distance:'步行 4 分鐘',hours:'營業至 14:00',price:'$75–105',tags:['飯','外帶','平價','吃正餐'],desc:'快速、便宜的午餐選擇。主要外帶，建議 11:30 前到。',updated:'1 週前'}
     ];
-    const places=JSON.parse(localStorage.getItem('campusGuidePlaces')||'null')||seedPlaces;
+    const places=[];
     const grid=document.getElementById('places'), input=document.getElementById('search'), line=document.getElementById('resultLine'), title=document.getElementById('listingTitle');let filter='all',activePlaces=[];let map,mapMarkers=[],userMarker;
     function kmTo(p){if(!window.userLocation||!Number.isFinite(p.lat)||!Number.isFinite(p.lng))return null;const r=Math.PI/180,a=window.userLocation.lat*r,b=p.lat*r,dLat=(p.lat-window.userLocation.lat)*r,dLng=(p.lng-window.userLocation.lng)*r;const h=Math.sin(dLat/2)**2+Math.cos(a)*Math.cos(b)*Math.sin(dLng/2)**2;return 6371*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));}function distanceText(p){if(!Number.isFinite(p.lat)||!Number.isFinite(p.lng))return '尚未設定店家座標';if(!window.userLocation)return '定位後自動計算距離';const km=kmTo(p);return km<1?`距離約 ${Math.round(km*1000)} 公尺`:`距離約 ${km.toFixed(1)} 公里`}function safeMenuUrl(p){try{const u=new URL(p.menu);return ['http:','https:'].includes(u.protocol)?u.href:''}catch{return ''}}function statusOf(p){const now=new Date(),mins=now.getHours()*60+now.getMinutes();if(p.days?.length&&!p.days.includes(now.getDay()))return '今日休息';const slots=p.periods||[];if(!slots.length)return '時間待確認';return slots.some(s=>{const a=s.open?.split(':').reduce((x,v)=>x*60+Number(v),0),b=s.close?.split(':').reduce((x,v)=>x*60+Number(v),0);return Number.isFinite(a)&&Number.isFinite(b)&&mins>=a&&mins<b})?'營業中':'休息中'}
     function render(){const q=input.value.trim().toLowerCase(),side=[...document.querySelectorAll('[data-side]:checked')].map(x=>x.value);const result=places.filter(p=>(filter==='all'||p.tags.includes(filter))&&side.every(t=>p.tags.includes(t))&&(!q||[p.name,p.desc,...p.tags].join(' ').toLowerCase().includes(q))).sort((a,b)=>(kmTo(a)??Infinity)-(kmTo(b)??Infinity));activePlaces=result;title.textContent=q?`「${input.value.trim()}」的搜尋結果`:(filter==='all'?'你附近的推薦':`${filter}的推薦`);line.textContent=result.length?(window.userLocation?'已依你目前位置的直線距離排序':'找到 '+result.length+' 個符合條件的地點・定位後可自動計算距離'):'目前找不到完全符合的地點，試試較短的關鍵字。';grid.innerHTML=result.length?result.map((p,i)=>{const menu=safeMenuUrl(p);return `<article class="place"><div class="visual ${p.tone}" ${p.image?`style="background-image:url('${p.image}')"`:''}>${p.image?'':p.icon}</div><div class="place-body"><div class="place-top"><h3>${p.name}</h3><span class="open">${statusOf(p)}</span></div><div class="place-meta">${distanceText(p)}・${p.hours}・${p.price}</div><div class="tags">${p.tags.slice(0,4).map(t=>`<span class="tag">${t}</span>`).join('')}</div>${menu?`<p style="margin:10px 0 0"><button class="menu-preview" data-menu="${menu}">查看最新菜單 ↗</button></p>`:''}</div><button class="detail" data-index="${places.indexOf(p)}">查看近期資訊與菜單 →</button></article>`}).join(''):'<div class="empty">沒有符合的店家。你可以改搜尋「飯」、「咖啡」或清除篩選。</div>';document.querySelectorAll('.detail').forEach(b=>b.onclick=()=>showDetail(places[b.dataset.index]));document.querySelectorAll('.menu-preview').forEach(b=>b.onclick=()=>openMenu(b.dataset.menu));syncMarkers();}
@@ -373,21 +373,7 @@
   };
   render();
   </script>
-  <script>
-  // GitHub Pages 測試版讀取已發布的資料快照；本機草案模式不受影響。
-  (async () => {
-    try {
-      const response = await fetch('./campus-guide-public-data.json', { cache: 'no-store' });
-      if (!response.ok) return;
-      const snapshot = await response.json();
-      if (!Array.isArray(snapshot.places) || !snapshot.places.length) return;
-      places.splice(0, places.length, ...snapshot.places);
-      render();
-    } catch (_) {
-      // 本機直接開啟檔案時沒有公開快照，保留原有草案資料即可。
-    }
-  })();
-  </script>
+  <!-- 正式前台只讀取 Supabase；公開 JSON 不再參與資料載入。 -->
   <script src="supabase-config.js"></script>
   <script type="module" src="backend.js"></script>
   <script type="module">
