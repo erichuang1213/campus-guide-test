@@ -33,6 +33,10 @@ create table if not exists public.feedback (
 
 alter table public.feedback add column if not exists reporter_name text;
 alter table public.feedback add column if not exists reporter_email text;
+alter table public.feedback add column if not exists reporter_user_id uuid references auth.users(id) on delete set null;
+alter table public.feedback add column if not exists place_name text;
+alter table public.feedback add column if not exists status text not null default '待處理' check (status in ('待處理', '處理中', '已完成'));
+alter table public.feedback add column if not exists resolved_at timestamptz;
 
 -- 前台登入使用者的店家確認紀錄：公開只看得到確認時間與狀況，不公開確認者身分。
 create table if not exists public.place_confirmations (
@@ -87,6 +91,12 @@ drop policy if exists "admins delete feedback" on public.feedback;
 create policy "admins delete feedback" on public.feedback for delete to authenticated using (
   exists (select 1 from public.admins where user_id = auth.uid())
 );
+drop policy if exists "admins update feedback" on public.feedback;
+create policy "admins update feedback" on public.feedback for update to authenticated using (
+  exists (select 1 from public.admins where user_id = auth.uid())
+) with check (
+  exists (select 1 from public.admins where user_id = auth.uid())
+);
 
 drop policy if exists "anyone reads confirmation status" on public.place_confirmations;
 create policy "anyone reads confirmation status" on public.place_confirmations
@@ -125,3 +135,4 @@ drop policy if exists "admins update menu images" on storage.objects;
 create policy "admins update menu images" on storage.objects for update to authenticated using (bucket_id = 'menu-images' and exists (select 1 from public.admins where user_id = auth.uid())) with check (bucket_id = 'menu-images' and exists (select 1 from public.admins where user_id = auth.uid()));
 drop policy if exists "admins delete menu images" on storage.objects;
 create policy "admins delete menu images" on storage.objects for delete to authenticated using (bucket_id = 'menu-images' and exists (select 1 from public.admins where user_id = auth.uid()));
+
