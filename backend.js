@@ -46,14 +46,18 @@ if (!config?.url || !config?.anonKey) {
     async syncPlaces(source) {
       const places = source.map(normalizePlace);
       source.splice(0, source.length, ...places);
-      const oldRows = result(await client.from('places').select('id')) || [];
       if (places.length) {
         result(await client.from('places').upsert(places.map(place => ({ id: place.id, name: place.name, data: place })), { onConflict: 'id' }));
       }
-      const keep = new Set(places.map(place => place.id));
-      const removed = oldRows.map(row => row.id).filter(id => !keep.has(id));
-      if (removed.length) result(await client.from('places').delete().in('id', removed));
       return places;
+    },
+    async savePlace(place) {
+      const normalized = normalizePlace(place);
+      result(await client.from('places').upsert({ id: normalized.id, name: normalized.name, data: normalized }, { onConflict: 'id' }));
+      return normalized;
+    },
+    async deletePlace(id) {
+      result(await client.from('places').delete().eq('id', id));
     },
     async getCandidates() {
       const rows = result(await client.from('pending_candidates').select('id, data').order('created_at', { ascending: true }));
