@@ -239,11 +239,6 @@
         }
       };
       let places = [];
-      try {
-        places =
-          (await (await fetch("./campus-guide-public-data.json")).json())
-            .places || [];
-      } catch (_) {}
       for (let i = 0; i < 50 && !window.CampusBackend; i++)
         await new Promise((r) => setTimeout(r, 50));
       try {
