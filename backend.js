@@ -91,16 +91,21 @@ if (!config?.url || !config?.anonKey) {
       result(await client.from('feedback').insert({
         type: feedback.type,
         message: feedback.text,
+        place_name: feedback.placeName || null,
         menu_image: feedback.menuImage || null,
-        menu_file_name: feedback.menuFileName || null,
-        reporter_name: user?.user_metadata?.full_name || user?.user_metadata?.name || null,
-        reporter_email: user?.email || null
+        menu_file_name: feedback.menuFileName || null
       }));
     },
     async getFeedback() {
       return result(await client.from('feedback').select('*').order('created_at', { ascending: false }));
     },
     async clearFeedback() { result(await client.from('feedback').delete().neq('id', '00000000-0000-0000-0000-000000000000')); }
+    ,async updateFeedbackStatus(id, status) {
+      result(await client.from('feedback').update({
+        status,
+        resolved_at: status === '已完成' ? new Date().toISOString() : null
+      }).eq('id', id));
+    }
     ,async getConfirmations(placeNames) {
       if (!placeNames?.length) return [];
       return result(await client.from('place_confirmations').select('place_name,status,confirmed_at').in('place_name', placeNames).order('confirmed_at', { ascending: false }));
@@ -112,3 +117,4 @@ if (!config?.url || !config?.anonKey) {
     }
   };
 }
+
