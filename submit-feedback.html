@@ -6,7 +6,6 @@
   <style>
     :root{--ink:#1f2933;--muted:#667085;--paper:#fffdf8;--line:#e8e2d7;--brand:#176b5b}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 ui-sans-serif,system-ui,"Noto Sans TC",Arial}.shell{max-width:760px;margin:auto;padding:0 24px}nav{height:82px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.logo{font-size:20px;font-weight:800}.logo b,a,.status{color:var(--brand)}a{font-weight:700;text-decoration:none}.intro{padding:54px 0 26px}.intro h1{font-size:34px;letter-spacing:-1px;margin:0 0 8px}.intro p,.hint{margin:0;color:var(--muted)}.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:25px;margin-bottom:50px}label{display:grid;gap:7px;font-weight:700;margin-bottom:18px}select,textarea,input{font:inherit;width:100%;padding:11px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink)}textarea{min-height:150px;resize:vertical}.hint{font-size:13px;margin:-8px 0 18px}.submit{border:0;border-radius:9px;background:var(--brand);color:#fff;padding:12px 17px;font:inherit;font-weight:800;cursor:pointer}.submit:disabled{opacity:.6;cursor:wait}.status{display:block;min-height:24px;margin-top:13px}@media(max-width:600px){.shell{padding:0 18px}.intro{padding-top:36px}.intro h1{font-size:30px}}
   </style>
-  <link href="public-pages.css?v=20260918" rel="stylesheet">
 </head>
 <body>
   <nav class="shell"><div class="logo">校邊<b>好去處</b></div><a href="index.html">← 返回找店</a></nav>
@@ -39,6 +38,7 @@
   <script type="module">
     const wait=async()=>{for(let i=0;i<50&&!window.CampusBackend;i++)await new Promise(r=>setTimeout(r,50));return window.CampusBackend};
     const backend=await wait(),form=document.getElementById('feedbackForm'),status=document.getElementById('status'),submit=document.getElementById('submit');
+    const placeName=new URLSearchParams(location.search).get('place');
     const session=await backend?.session();
     if(session)status.textContent=`已登入：${session.user.user_metadata?.full_name||session.user.email}。這次回饋會顯示給管理者。`;
     else status.textContent='目前以匿名方式回饋；登入後可讓管理者辨識你的回報。';
@@ -50,13 +50,12 @@
       if(file&&file.size>3*1024*1024){status.textContent='菜單圖片請小於 3 MB。';return}
       submit.disabled=true;status.textContent='正在送出回饋…';
       try{
-        const entry={type:document.getElementById('feedbackType').value,text:body,menuImage:file?await read(file):'',menuFileName:file?.name||''};
+        const entry={type:document.getElementById('feedbackType').value,text:body,placeName,menuImage:file?await read(file):'',menuFileName:file?.name||''};
         if(backend?.enabled)await backend.submitFeedback(entry);
         else{const local=JSON.parse(localStorage.getItem('campusGuideFeedback')||'[]');local.unshift({...entry,createdAt:new Date().toLocaleString('zh-TW')});localStorage.setItem('campusGuideFeedback',JSON.stringify(local))}
         form.reset();updateFeedbackType(document.getElementById('feedbackType'));status.textContent='已收到你的回饋，謝謝你幫忙讓資訊更可靠。';
       }catch(error){status.textContent=`目前無法送出：${error.message||'請稍後再試。'}`}finally{submit.disabled=false}
     };
-    const placeName=new URLSearchParams(location.search).get('place');
     if(placeName){
       document.getElementById('feedbackText').value=`店家：${placeName}\n狀況：`;
       document.getElementById('feedbackText').focus();
