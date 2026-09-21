@@ -373,7 +373,7 @@ document.getElementById('exportPublishData').onclick = () => {
   link.download = 'campus-guide-public-data.json'; link.click(); URL.revokeObjectURL(link.href);
   document.getElementById('exportPublishStatus').textContent = '已下載。請把 campus-guide-public-data.json 傳給開發者發布。';
 };
-</script><script src="supabase-config.js"></script><script type="module" src="backend.js"></script><script type="module">
+</script><script src="supabase-config.js"></script><script type="module" src="backend.js?v=place-normalization-1"></script><script type="module">
 // 雲端管理模式：未登入者不能操作；登入後店家資料會與公開首頁共用。
 const waitForBackend = async () => {
   for (let i = 0; i < 50 && !window.CampusBackend; i++) await new Promise(resolve => setTimeout(resolve, 50));
@@ -471,3 +471,4 @@ menuAdminLink.href='menus.html';
 menuAdminLink.textContent='菜單管理';
 document.querySelector('.admin-links').append(menuAdminLink);
 </script></body></html>
+
