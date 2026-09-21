@@ -9,7 +9,28 @@ if (!config?.url || !config?.anonKey) {
   const client = createClient(config.url, config.anonKey, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
-  const normalizePlace = place => ({ ...place, id: place.id || crypto.randomUUID() });
+  const stringList = value => {
+    const values = Array.isArray(value) ? value : typeof value === 'string' ? value.split(/[|、，,]/) : [];
+    return [...new Set(values.map(item => String(item || '').trim()).filter(Boolean))];
+  };
+  const normalizePeriods = value => (Array.isArray(value) ? value : [])
+    .map(slot => ({ open: String(slot?.open || '').trim(), close: String(slot?.close || '').trim() }))
+    .filter(slot => slot.open || slot.close);
+  const normalizePlace = place => {
+    const raw = place || {};
+    const tags = stringList(raw.tags);
+    const category = String(raw.category || '').trim();
+    return {
+      ...raw,
+      id: raw.id || crypto.randomUUID(),
+      name: String(raw.name || '').trim(),
+      category,
+      tags: category && !tags.includes(category) ? [category, ...tags] : tags,
+      days: [...new Set((Array.isArray(raw.days) ? raw.days : []).map(Number).filter(day => Number.isInteger(day) && day >= 0 && day <= 6))],
+      periods: normalizePeriods(raw.periods),
+      menuImages: stringList(raw.menuImages)
+    };
+  };
   const result = ({ data, error }) => {
     if (error) throw error;
     return data;
@@ -41,7 +62,7 @@ if (!config?.url || !config?.anonKey) {
     },
     async getPlaces() {
       const rows = result(await client.from('places').select('data').order('updated_at', { ascending: false }));
-      return (rows || []).map(row => row.data);
+      return (rows || []).map(row => normalizePlace(row.data));
     },
     async syncPlaces(source) {
       const places = source.map(normalizePlace);
