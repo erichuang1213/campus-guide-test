@@ -55,6 +55,33 @@
   <dialog id="detailDialog"><div class="dialog-body"><button class="close" aria-label="關閉">×</button><div id="dialogContent"></div></div></dialog><dialog id="menuDialog"><div class="dialog-body" style="max-width:900px"><button class="close-menu close" aria-label="關閉">×</button><h2>店家菜單</h2><div style="display:flex;gap:8px;margin-bottom:12px"><button class="menu-zoom" data-zoom="-">縮小</button><button class="menu-zoom" data-zoom="reset">原尺寸</button><button class="menu-zoom" data-zoom="+">放大</button></div><div style="max-height:70vh;overflow:auto;border:1px solid var(--line)"><img id="menuImage" alt="店家菜單" style="display:block;max-width:none;transform-origin:top left"></div></div></dialog>
   <script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
   <script>
+    // 首次進入時可主動詢問定位；拒絕後同一個工作階段不再反覆跳出，仍可按右上角手動重試。
+    (() => {
+      const key = 'campusGuideLocationPrompted';
+      const geo = navigator.geolocation;
+      if (!geo?.getCurrentPosition) return;
+      const original = geo.getCurrentPosition.bind(geo);
+      let manualRequest = false;
+      navigator.geolocation.getCurrentPosition = (success, error, options) => {
+        if (!manualRequest && sessionStorage.getItem(key) === '1') {
+          error?.({ code: 1, suppressed: true });
+          queueMicrotask(() => {
+            const area = document.getElementById('area');
+            if (area) area.textContent = '尚未使用定位；可按右上角按鈕隨時重試';
+          });
+          return;
+        }
+        sessionStorage.setItem(key, '1');
+        return original(success, error, options);
+      };
+      document.addEventListener('click', event => {
+        if (!event.target.closest('#locate')) return;
+        manualRequest = true;
+        queueMicrotask(() => { manualRequest = false; });
+      }, true);
+    })();
+  </script>
+  <script>
     const seedPlaces=[
       {name:'巷口麵食館',icon:'🍜',tone:'tone-1',distance:'步行 3 分鐘',hours:'營業至 20:30',price:'$90–160',tags:['麵','吃正餐','可內用','平價'],desc:'牛肉麵、乾麵與水餃。中午快但 12:10–12:40 常需要等位。',updated:'2 天前'},
       {name:'森日咖啡',icon:'☕',tone:'tone-2',distance:'步行 5 分鐘',hours:'營業至 21:00',price:'$100–190',tags:['咖啡','讀書','有插座','可內用'],desc:'二樓安靜、有 Wi‑Fi 和多數座位插座；平日午後適合讀書。',updated:'昨天'},
@@ -479,3 +506,4 @@
 </script>
 </body>
 </html>
+
