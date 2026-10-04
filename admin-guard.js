@@ -5,7 +5,7 @@ const showDenied = text => {
   document.documentElement.classList.remove('backend-guard');
 };
 try {
-  await import('./backend.js');
+  await import('./backend.js?v=20261005b');
   const backend = window.CampusBackend;
   if (!backend?.enabled || !await backend.session() || !await backend.isAdmin()) showDenied('你沒有進入此管理工具的權限。');
   else document.documentElement.classList.remove('backend-guard');
