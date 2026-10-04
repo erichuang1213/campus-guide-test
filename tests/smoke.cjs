@@ -24,6 +24,8 @@ new vm.SourceTextModule(read('admin-guard.js'));
 
 assert.doesNotMatch(read('supabase/schema.sql'), /^\+$/m, 'SQL schema must not contain a diff marker');
 assert.doesNotMatch(read('submit-feedback.html'), /localStorage\.setItem/, 'feedback must not report local-only success');
+assert.match(read('admin.html'), /id="importCsv"/, 'admin CSV import button must exist');
+assert.doesNotMatch(read('admin.html'), /(?:oldCsvPanel|standardCsvPanel)\.remove\(\)/, 'admin CSV import panel must remain mounted for cloud handlers');
 assert.doesNotMatch(read('index.html'), /geolocation\.getCurrentPosition\s*=/, 'location logic must not monkey-patch browser APIs');
 assert.match(read('candidates.html'), /id:c\.id/, 'candidate promotion must retain a stable ID');
 assert.match(read('menus.html'), /if\(dirty&&!confirm/, 'switching menu stores must warn about unsaved edits');

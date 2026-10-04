@@ -101,8 +101,7 @@ edit = function (index) {
   setTimeout(() => document.getElementById('formTitle').scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
 };
 
-const oldCsvPanel = document.getElementById('csvFile')?.closest('.panel');
-if (oldCsvPanel) oldCsvPanel.remove();
+// Keep the CSV panel in the document: cloud mode replaces its import handler after login.
 
 const menuInput = document.getElementById('menu');
 menuInput.type = 'text';
