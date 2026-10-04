@@ -20,15 +20,16 @@ if (!config?.url || !config?.anonKey) {
     const raw = place || {};
     const tags = stringList(raw.tags);
     const category = String(raw.category || '').trim();
+    const categoryTags = stringList(category);
     return {
       ...raw,
       id: raw.id || crypto.randomUUID(),
       name: String(raw.name || '').trim(),
       category,
-      tags: category && !tags.includes(category) ? [category, ...tags] : tags,
+      tags: [...new Set([...categoryTags, ...tags])],
       days: [...new Set((Array.isArray(raw.days) ? raw.days : []).map(Number).filter(day => Number.isInteger(day) && day >= 0 && day <= 6))],
       periods: normalizePeriods(raw.periods),
-      menuImages: stringList(raw.menuImages)
+      menuImages: [...new Set((Array.isArray(raw.menuImages) ? raw.menuImages : []).map(url => String(url || '').trim()).filter(Boolean))]
     };
   };
   const result = ({ data, error }) => {
@@ -61,8 +62,8 @@ if (!config?.url || !config?.anonKey) {
       return Boolean(data);
     },
     async getPlaces() {
-      const rows = result(await client.from('places').select('data').order('updated_at', { ascending: false }));
-      return (rows || []).map(row => normalizePlace(row.data));
+      const rows = result(await client.from('places').select('id,data').order('updated_at', { ascending: false }));
+      return (rows || []).map(row => normalizePlace({ ...row.data, id: row.id }));
     },
     async syncPlaces(source) {
       const places = source.map(normalizePlace);
@@ -138,4 +139,3 @@ if (!config?.url || !config?.anonKey) {
     }
   };
 }
-

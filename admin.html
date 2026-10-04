@@ -325,7 +325,7 @@ let weeklyOverrides = [];
 const renderWeeklyOverrides = () => {
   const list = document.getElementById('overrideList');
   list.innerHTML = weeklyOverrides.length ? weeklyOverrides.map((rule, index) => `<div class="row"><div><strong>${rule.days.map(day => `週${weekdays[day]}`).join('、')}</strong><small>${rule.open}–${rule.close}・取代一般時段</small></div><button class="delete" type="button" data-delete-override="${index}">移除</button></div>`).join('') : '<p class="sub">尚未新增每週特殊時段。</p>';
-  document.querySelectorAll('[data-delete-override]').forEach(button => button.onclick = () => { weeklyOverrides.splice(Number(button.dataset.deleteOverride), 1); persistWeeklyOverrides(); renderWeeklyOverrides(); });
+  document.querySelectorAll('[data-delete-override]').forEach(button => button.onclick = () => { weeklyOverrides.splice(Number(button.dataset.deleteOverride), 1); renderWeeklyOverrides(); document.getElementById('status').textContent = '特殊時段已從編輯草稿移除；請按「儲存店家」套用。'; });
 };
 const persistWeeklyOverrides = () => {
   const index = document.getElementById('editIndex').value;
@@ -344,8 +344,7 @@ document.getElementById('addWeeklyOverride').onclick = () => {
   weeklyOverrides.push({ days, open, close });
   document.querySelectorAll('#overrideDays input').forEach(input => input.checked = false);
   document.getElementById('overrideOpen').value = ''; document.getElementById('overrideClose').value = '';
-  const persisted = persistWeeklyOverrides();
-  if (!persisted) document.getElementById('status').textContent = '特殊時段已加入；新增店家請再按最下方的「儲存店家」。';
+  document.getElementById('status').textContent = '特殊時段已加入編輯草稿；請按「儲存店家」套用。';
   renderWeeklyOverrides();
 };
 const submitWithWeeklyOverrides = document.getElementById('form').onsubmit;
@@ -373,7 +372,7 @@ document.getElementById('exportPublishData').onclick = () => {
   link.download = 'campus-guide-public-data.json'; link.click(); URL.revokeObjectURL(link.href);
   document.getElementById('exportPublishStatus').textContent = '已下載。請把 campus-guide-public-data.json 傳給開發者發布。';
 };
-</script><script src="supabase-config.js"></script><script type="module" src="backend.js?v=place-normalization-1"></script><script type="module">
+</script><script src="supabase-config.js"></script><script type="module" src="backend.js?v=editor-workflow-2"></script><script type="module">
 // 雲端管理模式：未登入者不能操作；登入後店家資料會與公開首頁共用。
 const waitForBackend = async () => {
   for (let i = 0; i < 50 && !window.CampusBackend; i++) await new Promise(resolve => setTimeout(resolve, 50));
@@ -403,36 +402,108 @@ const startAdmin = async () => {
   try {
     if (!await backend.isAdmin()) { showLogin('此帳號沒有管理權限。'); return; }
     const localSave = save;
-    let syncing = false;
-    // 本機只負責立即更新畫面；雲端改由各項操作寫入單一店家。
     save = () => localSave();
     const originalAddTag = document.getElementById('addTag').onclick;
     document.getElementById('addTag').onclick = () => { originalAddTag(); backend.saveSettings(customTags).catch(() => {}); };
-    let remotePlaces = await backend.getPlaces();
-    if (!remotePlaces.length) {
-      const snapshot = await fetch('./campus-guide-public-data.json', { cache: 'no-store' }).then(response => response.ok ? response.json() : null);
-      remotePlaces = snapshot?.places || places;
-      places.splice(0, places.length, ...remotePlaces);
-      syncing = true; localSave(); syncing = false;
-      await backend.syncPlaces(places);
-    } else { places.splice(0, places.length, ...remotePlaces); localSave(); }
+    const remotePlaces = await backend.getPlaces();
+    places.splice(0, places.length, ...remotePlaces);
+    localSave();
     const remoteTags = await backend.getSettings();
     if (remoteTags.length) { customTags = remoteTags; tags = [...defaultTags, ...customTags]; renderTagChoices(); }
 
-    // 儲存表單只更新正在編輯的那間店，不再送出整份清單。
-    const originalSubmit = document.getElementById('form').onsubmit;
-    document.getElementById('form').onsubmit = async event => {
-      const index = document.getElementById('editIndex').value;
-      originalSubmit(event);
-      const place = index === '' ? places[0] : places[Number(index)];
+    // 雲端模式只使用一條載入及儲存流程。舊版疊加的表單 handler 不再執行。
+    const cloneSlots = value => (Array.isArray(value) ? value : []).map(slot => ({ open: slot.open || '', close: slot.close || '' }));
+    const legacyWeekly = place => {
+      const hours = place.weeklyHours || {};
+      const enabledDays = weekdays.map((_, day) => day).filter(day => hours[day]?.enabled);
+      const counts = new Map();
+      enabledDays.forEach(day => { const key = JSON.stringify(cloneSlots(hours[day]?.periods)); counts.set(key, (counts.get(key) || 0) + 1); });
+      const baseKey = [...counts].sort((a, b) => b[1] - a[1])[0]?.[0] || '[]';
+      const base = JSON.parse(baseKey);
+      const overrides = enabledDays.filter(day => JSON.stringify(cloneSlots(hours[day]?.periods)) !== baseKey)
+        .flatMap(day => cloneSlots(hours[day]?.periods).map(slot => ({ days: [day], ...slot })));
+      return { days: enabledDays, periods: base, overrides };
+    };
+    let savingPlace = false;
+    const clearEditor = clearForm;
+    clearForm = () => {
+      clearEditor();
+      $('menuText').value = '';
+      $('coverX').value = 50;
+      $('coverY').value = 50;
+      updateCoverPreview('');
+    };
+    $('cancel').onclick = () => { if (!savingPlace) clearForm(); };
+    edit = index => {
+      if (savingPlace) return;
+      const place = places[index];
       if (!place) return;
+      $('editIndex').value = index;
+      $('formTitle').textContent = `編輯：${place.name}`;
+      ['name', 'category', 'price', 'desc', 'lat', 'lng', 'image'].forEach(key => $(key).value = place[key] ?? '');
+      pendingImage = '';
+      $('imageFile').value = '';
+      $('menu').value = place.menu || '';
+      $('menuText').value = place.menuText || '';
+      const schedule = place.weeklyHours ? legacyWeekly(place) : { days: place.days, periods: place.periods, overrides: (place.weeklySchedules || []).flatMap(rule => (rule.periods || []).map(slot => ({ days: [...(rule.days || [])], open: slot.open || '', close: slot.close || '' }))) };
+      renderDays(schedule.days || []);
+      renderTimeSlots(cloneSlots(schedule.periods));
+      weeklyOverrides = schedule.overrides;
+      renderWeeklyOverrides();
+      specialHours = (place.specialHours || []).map(item => ({ ...item }));
+      renderSpecialHours();
+      renderTagChoices(place.tags || []);
+      const position = place.coverPosition || { x: 50, y: 50 };
+      $('coverX').value = position.x;
+      $('coverY').value = position.y;
+      updateCoverPreview(place.image || '');
+      if (Number.isFinite(place.lat) && Number.isFinite(place.lng)) { picker.flyTo({ center: [place.lng, place.lat], zoom: 16 }); setPicker(place.lng, place.lat); }
+      else if (pickerMarker) { pickerMarker.remove(); pickerMarker = null; }
+      $('status').textContent = '';
+      $('formTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    document.getElementById('form').onsubmit = async event => {
+      event.preventDefault();
+      if (savingPlace) return;
+      const index = document.getElementById('editIndex').value;
+      const old = index === '' ? {} : places[Number(index)];
+      if (!old) { $('status').textContent = '找不到正在編輯的店家，請重新開啟。'; return; }
+      const chosenTags = [...document.querySelectorAll('#tagChoices input:checked')].map(input => input.value);
+      const selectedDays = [...document.querySelectorAll('#dayChoices input:checked')].map(input => Number(input.value));
+      const selectedPeriods = cloneSlots(periods).filter(slot => slot.open || slot.close);
+      const selectedOverrides = weeklyOverrides.map(rule => ({ days: [...rule.days], periods: [{ open: rule.open, close: rule.close }] }));
+      const place = {
+        ...old,
+        id: old.id || crypto.randomUUID(),
+        createdAt: old.createdAt || new Date().toISOString(),
+        name: $('name').value.trim(), category: $('category').value.trim(),
+        price: $('price').value.trim() || '價位待確認',
+        desc: $('desc').value.trim() || '尚未補充學生提醒。',
+        image: pendingImage || $('image').value.trim(),
+        coverPosition: { x: Number($('coverX').value), y: Number($('coverY').value) },
+        lat: $('lat').value === '' ? undefined : Number($('lat').value),
+        lng: $('lng').value === '' ? undefined : Number($('lng').value),
+        tags: chosenTags, days: selectedDays, periods: selectedPeriods,
+        weeklySchedules: selectedOverrides, weeklyHours: undefined,
+        specialHours: specialHours.map(item => ({ ...item })),
+        hours: '依星期設定', updated: '剛剛'
+      };
+      const submitButton = document.querySelector('#form [type="submit"]');
+      savingPlace = true;
+      submitButton.disabled = true;
       try {
         document.getElementById('status').textContent = '正在同步這間店家…';
-        Object.assign(place, await backend.savePlace(place));
+        const saved = await backend.savePlace(place);
+        if (index === '') places.unshift(saved);
+        else places[Number(index)] = saved;
         localSave();
+        clearForm();
         document.getElementById('status').textContent = '已儲存並同步到公開首頁。';
       } catch (error) {
         document.getElementById('status').textContent = `雲端儲存失敗：${error.message}`;
+      } finally {
+        savingPlace = false;
+        submitButton.disabled = false;
       }
     };
 
@@ -471,4 +542,3 @@ menuAdminLink.href='menus.html';
 menuAdminLink.textContent='菜單管理';
 document.querySelector('.admin-links').append(menuAdminLink);
 </script></body></html>
-
