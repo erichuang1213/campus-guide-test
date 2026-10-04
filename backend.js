@@ -138,7 +138,7 @@ if (!config?.url || !config?.anonKey) {
     }
     ,async getConfirmations(placeNames) {
       if (!placeNames?.length) return [];
-      return result(await client.from('place_confirmations').select('place_name,status,confirmed_at').in('place_name', placeNames).order('confirmed_at', { ascending: false }));
+      return result(await client.rpc('public_place_confirmations', { requested_names: placeNames }));
     }
     ,async confirmPlace(placeName, status = '資訊正確') {
       const session = await this.session();

@@ -27,4 +27,6 @@ assert.doesNotMatch(read('submit-feedback.html'), /localStorage\.setItem/, 'feed
 assert.doesNotMatch(read('index.html'), /geolocation\.getCurrentPosition\s*=/, 'location logic must not monkey-patch browser APIs');
 assert.match(read('candidates.html'), /id:c\.id/, 'candidate promotion must retain a stable ID');
 assert.match(read('menus.html'), /if\(dirty&&!confirm/, 'switching menu stores must warn about unsaved edits');
+assert.match(read('backend.js'), /rpc\('public_place_confirmations'/, 'public confirmations must use the redacted RPC');
+assert.doesNotMatch(read('supabase/schema.sql'), /place_confirmations\s*\nfor select to anon/, 'anonymous visitors must not select private confirmation rows');
 console.log(`Smoke checks passed: ${pages.length} pages, backend modules, SQL and workflow invariants.`);

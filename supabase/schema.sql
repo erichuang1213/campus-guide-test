@@ -99,11 +99,27 @@ create policy "admins update feedback" on public.feedback for update to authenti
 );
 
 drop policy if exists "anyone reads confirmation status" on public.place_confirmations;
-create policy "anyone reads confirmation status" on public.place_confirmations
-for select to anon, authenticated using (true);
+drop policy if exists "authors and admins read confirmations" on public.place_confirmations;
+create policy "authors and admins read confirmations" on public.place_confirmations
+for select to authenticated using (
+  user_id = auth.uid() or exists (select 1 from public.admins where user_id = auth.uid())
+);
 drop policy if exists "signed in users confirm places" on public.place_confirmations;
 create policy "signed in users confirm places" on public.place_confirmations
 for insert to authenticated with check (auth.uid() = user_id);
+
+create or replace function public.public_place_confirmations(requested_names text[])
+returns table(place_name text, status text, confirmed_at timestamptz)
+language sql stable security definer set search_path = public
+as $$
+  select p.place_name, p.status, p.confirmed_at
+  from public.place_confirmations as p
+  where p.place_name = any(requested_names)
+  order by p.confirmed_at desc
+  limit 500;
+$$;
+revoke all on function public.public_place_confirmations(text[]) from public;
+grant execute on function public.public_place_confirmations(text[]) to anon, authenticated;
 -- 待審核店家與菜單檔案空間：完整定義請見 migrations/20260920_p0_cloud_contract.sql。
 create table if not exists public.pending_candidates (
   id uuid primary key default gen_random_uuid(),
