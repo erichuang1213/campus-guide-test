@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>校邊好去處｜網站草案</title>
+  <title>校邊好去處｜探索附近店家</title>
   <link href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet">
   <link href="editorial.css?v=20260918" rel="stylesheet">
   <style>
@@ -42,7 +42,7 @@
     .grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}.place{position:relative;display:flex;min-height:386px;flex-direction:column;border:1px solid rgba(20,69,59,.12);border-radius:23px 23px 12px 12px;background:rgba(255,255,255,.58);box-shadow:0 12px 28px rgba(34,57,50,.07);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}.place:hover{transform:translateY(-7px);box-shadow:0 26px 44px rgba(27,65,56,.15)}.visual{height:184px;align-items:flex-end;padding:22px;font-size:43px;background-size:cover;background-position:center}.place:first-child .visual{border-radius:22px 22px 0 0}.place-body{flex:1;padding:19px 20px 16px;background:transparent}.place h3{font-family:"Noto Serif TC","Songti TC",serif;font-size:21px;letter-spacing:-.05em;line-height:1.28}.open{border:1px solid rgba(4,103,84,.14);border-radius:999px;background:rgba(227,242,233,.82);padding:4px 8px;font-size:11px}.place-meta{min-height:40px;margin:9px 0 12px;font-size:12px;line-height:1.6}.tag{border:1px solid rgba(54,86,76,.07);border-radius:7px;background:rgba(244,242,235,.8);padding:4px 7px;font-size:11px}.detail{min-height:54px;padding:14px 20px;border-top:1px solid rgba(20,69,59,.1);background:rgba(255,255,255,.35);font-size:13px}.detail::after{font-size:19px}.detail:hover{background:rgba(220,240,231,.8)}
     .how{position:relative;overflow:hidden;margin-top:76px;padding:42px 44px;border:1px solid rgba(255,255,255,.78);border-radius:28px;background:linear-gradient(124deg,rgba(221,240,229,.92),rgba(252,237,211,.8));box-shadow:0 18px 38px rgba(51,78,63,.09)}.how::after{content:"";position:absolute;width:300px;height:300px;right:-95px;top:-145px;border-radius:50%;background:rgba(255,255,255,.25)}.how h2{position:relative;font-family:"Noto Serif TC","Songti TC",serif;font-size:30px;letter-spacing:-.05em}.steps{position:relative;gap:35px}.step{padding-right:20px;border-right:1px solid rgba(21,76,64,.15)}.step:last-child{border-right:0}.step-num{width:34px;height:34px;background:var(--ink);box-shadow:0 7px 14px rgba(23,42,40,.14)}
     .drawer{right:max(28px,calc((100vw - 1240px)/2 + 36px));top:74px;border-color:rgba(255,255,255,.75);border-radius:18px;background:rgba(255,255,255,.86);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 22px 45px rgba(29,58,51,.18)}.drawer a{border-radius:10px}
-    @media(max-width:760px){.shell{padding:0 22px}nav.shell{height:76px}.logo{font-size:23px}.hero{padding:42px 0 48px}.hero-grid{grid-template-columns:1fr;gap:34px}h1{font-size:clamp(40px,12vw,56px);margin:16px 0 24px}.mini-map{height:280px;border-radius:26px 26px 62px 26px}.mini-map::after{border-radius:20px 20px 56px 20px}main{padding:52px 0 72px}.section-head h2{font-size:29px}.grid{grid-template-columns:1fr;gap:16px}.place{min-height:0}.visual{height:168px}.how{padding:30px 24px}.how h2{font-size:25px}.steps{gap:22px}.step{padding:0 0 18px;border-right:0;border-bottom:1px solid rgba(21,76,64,.15)}.step:last-child{border-bottom:0;padding-bottom:0}.location{font-size:0;width:38px;padding:0;border-radius:12px}.location::after{content:'⌖';font-size:18px}.menu-toggle{width:38px}.map-actions{display:none}}
+    @media(max-width:760px){.shell{padding:0 14px}nav.shell{height:76px;gap:5px}.logo{font-size:clamp(18px,5.4vw,23px)}.hero{padding:42px 0 48px}.hero-grid{grid-template-columns:1fr;gap:34px}h1{font-size:clamp(40px,12vw,56px);margin:16px 0 24px}.mini-map{height:280px;border-radius:26px 26px 62px 26px}.mini-map::after{border-radius:20px 20px 56px 20px}main{padding:52px 0 72px}.section-head h2{font-size:29px}.grid{grid-template-columns:1fr;gap:16px}.place{min-height:0}.visual{height:168px}.how{padding:30px 24px}.how h2{font-size:25px}.steps{gap:22px}.step{padding:0 0 18px;border-right:0;border-bottom:1px solid rgba(21,76,64,.15)}.step:last-child{border-bottom:0;padding-bottom:0}.location{font-size:0;width:38px;padding:0;border-radius:12px}.location::after{content:'⌖';font-size:18px}.location.auth-button{width:42px;padding:0;font-size:12px}.location.auth-button::after{content:none}.menu-toggle{width:38px}.map-actions{display:none}}
   </style>
 </head>
 <body>
@@ -55,33 +55,6 @@
   <dialog id="detailDialog"><div class="dialog-body"><button class="close" aria-label="關閉">×</button><div id="dialogContent"></div></div></dialog><dialog id="menuDialog"><div class="dialog-body" style="max-width:900px"><button class="close-menu close" aria-label="關閉">×</button><h2>店家菜單</h2><div style="display:flex;gap:8px;margin-bottom:12px"><button class="menu-zoom" data-zoom="-">縮小</button><button class="menu-zoom" data-zoom="reset">原尺寸</button><button class="menu-zoom" data-zoom="+">放大</button></div><div style="max-height:70vh;overflow:auto;border:1px solid var(--line)"><img id="menuImage" alt="店家菜單" style="display:block;max-width:none;transform-origin:top left"></div></div></dialog>
   <script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
   <script>
-    // 首次進入時可主動詢問定位；拒絕後同一個工作階段不再反覆跳出，仍可按右上角手動重試。
-    (() => {
-      const key = 'campusGuideLocationPrompted';
-      const geo = navigator.geolocation;
-      if (!geo?.getCurrentPosition) return;
-      const original = geo.getCurrentPosition.bind(geo);
-      let manualRequest = false;
-      navigator.geolocation.getCurrentPosition = (success, error, options) => {
-        if (!manualRequest && sessionStorage.getItem(key) === '1') {
-          error?.({ code: 1, suppressed: true });
-          queueMicrotask(() => {
-            const area = document.getElementById('area');
-            if (area) area.textContent = '尚未使用定位；可按右上角按鈕隨時重試';
-          });
-          return;
-        }
-        sessionStorage.setItem(key, '1');
-        return original(success, error, options);
-      };
-      document.addEventListener('click', event => {
-        if (!event.target.closest('#locate')) return;
-        manualRequest = true;
-        queueMicrotask(() => { manualRequest = false; });
-      }, true);
-    })();
-  </script>
-  <script>
     const seedPlaces=[
       {name:'巷口麵食館',icon:'🍜',tone:'tone-1',distance:'步行 3 分鐘',hours:'營業至 20:30',price:'$90–160',tags:['麵','吃正餐','可內用','平價'],desc:'牛肉麵、乾麵與水餃。中午快但 12:10–12:40 常需要等位。',updated:'2 天前'},
       {name:'森日咖啡',icon:'☕',tone:'tone-2',distance:'步行 5 分鐘',hours:'營業至 21:00',price:'$100–190',tags:['咖啡','讀書','有插座','可內用'],desc:'二樓安靜、有 Wi‑Fi 和多數座位插座；平日午後適合讀書。',updated:'昨天'},
@@ -93,15 +66,26 @@
     const places=[];
     const grid=document.getElementById('places'), input=document.getElementById('search'), line=document.getElementById('resultLine'), title=document.getElementById('listingTitle');let filter='all',activePlaces=[];let map,mapMarkers=[],userMarker;
     function kmTo(p){if(!window.userLocation||!Number.isFinite(p.lat)||!Number.isFinite(p.lng))return null;const r=Math.PI/180,a=window.userLocation.lat*r,b=p.lat*r,dLat=(p.lat-window.userLocation.lat)*r,dLng=(p.lng-window.userLocation.lng)*r;const h=Math.sin(dLat/2)**2+Math.cos(a)*Math.cos(b)*Math.sin(dLng/2)**2;return 6371*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));}function distanceText(p){if(!Number.isFinite(p.lat)||!Number.isFinite(p.lng))return '尚未設定店家座標';if(!window.userLocation)return '定位後自動計算距離';const km=kmTo(p);return km<1?`距離約 ${Math.round(km*1000)} 公尺`:`距離約 ${km.toFixed(1)} 公里`}function safeMenuUrl(p){try{const u=new URL(p.menu);return ['http:','https:'].includes(u.protocol)?u.href:''}catch{return ''}}function statusOf(p){const now=new Date(),mins=now.getHours()*60+now.getMinutes();if(p.days?.length&&!p.days.includes(now.getDay()))return '今日休息';const slots=p.periods||[];if(!slots.length)return '時間待確認';return slots.some(s=>{const a=s.open?.split(':').reduce((x,v)=>x*60+Number(v),0),b=s.close?.split(':').reduce((x,v)=>x*60+Number(v),0);return Number.isFinite(a)&&Number.isFinite(b)&&mins>=a&&mins<b})?'營業中':'休息中'}
-    function render(){const q=input.value.trim().toLowerCase(),side=[...document.querySelectorAll('[data-side]:checked')].map(x=>x.value);const result=places.filter(p=>(filter==='all'||p.tags.includes(filter))&&side.every(t=>p.tags.includes(t))&&(!q||[p.name,p.desc,...p.tags].join(' ').toLowerCase().includes(q))).sort((a,b)=>(kmTo(a)??Infinity)-(kmTo(b)??Infinity));activePlaces=result;title.textContent=q?`「${input.value.trim()}」的搜尋結果`:(filter==='all'?'你附近的推薦':`${filter}的推薦`);line.textContent=result.length?(window.userLocation?'已依你目前位置的直線距離排序':'找到 '+result.length+' 個符合條件的地點・定位後可自動計算距離'):'目前找不到完全符合的地點，試試較短的關鍵字。';grid.innerHTML=result.length?result.map((p,i)=>{const menu=safeMenuUrl(p);return `<article class="place"><div class="visual ${p.tone}" ${p.image?`style="background-image:url('${p.image}')"`:''}>${p.image?'':p.icon}</div><div class="place-body"><div class="place-top"><h3>${p.name}</h3><span class="open">${statusOf(p)}</span></div><div class="place-meta">${distanceText(p)}・${p.hours}・${p.price}</div><div class="tags">${p.tags.slice(0,4).map(t=>`<span class="tag">${t}</span>`).join('')}</div>${menu?`<p style="margin:10px 0 0"><button class="menu-preview" data-menu="${menu}">查看最新菜單 ↗</button></p>`:''}</div><button class="detail" data-index="${places.indexOf(p)}">查看近期資訊與菜單 →</button></article>`}).join(''):'<div class="empty">沒有符合的店家。你可以改搜尋「飯」、「咖啡」或清除篩選。</div>';document.querySelectorAll('.detail').forEach(b=>b.onclick=()=>showDetail(places[b.dataset.index]));document.querySelectorAll('.menu-preview').forEach(b=>b.onclick=()=>openMenu(b.dataset.menu));syncMarkers();}
+    const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    function render(){
+      const q=input.value.trim().toLowerCase(),side=[...document.querySelectorAll('[data-side]:checked')].map(x=>x.value);
+      const result=places.filter(p=>(filter==='all'||(p.tags||[]).includes(filter))&&side.every(t=>(p.tags||[]).includes(t))&&(!q||[p.name,p.desc,...(p.tags||[])].join(' ').toLowerCase().includes(q))).sort((a,b)=>(kmTo(a)??Infinity)-(kmTo(b)??Infinity));
+      activePlaces=result;
+      title.textContent=q?`「${input.value.trim()}」的搜尋結果`:(filter==='all'?'你附近的推薦':`${filter}的推薦`);
+      line.textContent=result.length?(window.userLocation?'已依你目前位置的直線距離排序':`找到 ${result.length} 個符合條件的地點・定位後可自動計算距離`):'目前找不到完全符合的地點，試試較短的關鍵字。';
+      grid.innerHTML=result.length?result.map((p,i)=>`<article class="place"><div class="visual ${/^tone-\d+$/.test(p.tone||'')?p.tone:'tone-1'}">${esc(p.icon||'📍')}</div><div class="place-body"><div class="place-top"><h3>${esc(p.name)}</h3><span class="open">${esc(statusOf(p))}</span></div><div class="place-meta">${esc(distanceText(p))}・${esc(p.hours||'營業時間待確認')}・${esc(p.price||'價位待確認')}</div><div class="tags">${(p.tags||[]).slice(0,4).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div></div><button class="detail" data-index="${i}">查看近期資訊與菜單 →</button></article>`).join(''):'<div class="empty">沒有符合的店家。你可以改搜尋「飯」、「咖啡」或清除篩選。</div>';
+      grid.querySelectorAll('.place').forEach((card,i)=>{const image=result[i].image;if(/^https?:\/\//.test(image||'')||/^data:image\//.test(image||'')){const visual=card.querySelector('.visual');visual.textContent='';visual.style.backgroundImage=`url(${JSON.stringify(image)})`;}});
+      grid.querySelectorAll('.detail').forEach(button=>button.onclick=()=>showDetail(result[Number(button.dataset.index)]));
+      syncMarkers();
+    }
     document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filter=c.dataset.filter;document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('active',x===c));render()});document.getElementById('searchForm').onsubmit=e=>{e.preventDefault();filter='all';document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('active',x.dataset.filter==='all'));render()};input.oninput=render;document.getElementById('reset').onclick=()=>{filter='all';input.value='';document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('active',x.dataset.filter==='all'));render()};
     const dialog=document.getElementById('detailDialog'),menuDialog=document.getElementById('menuDialog');let menuScale=1,menuNaturalWidth=0;function applyMenuScale(){const img=document.getElementById('menuImage');if(menuNaturalWidth)img.style.width=`${Math.round(menuNaturalWidth*menuScale)}px`}function openMenu(url){menuScale=1;const img=document.getElementById('menuImage');img.onload=()=>{menuNaturalWidth=img.naturalWidth;applyMenuScale()};img.src=url;menuDialog.showModal()}function showDetail(p){const votes=JSON.parse(localStorage.getItem('campusGuideQA')||'[]').filter(v=>v.place===p.name),menu=safeMenuUrl(p);document.getElementById('dialogContent').innerHTML=`<div class="visual ${p.tone}" style="height:105px;border-radius:12px;justify-content:center">${p.image?'':p.icon}</div><h2>${p.name}</h2><p class="detail-info">${distanceText(p)}・${p.hours}・${p.price}</p><div class="tags">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div><div class="info-block"><strong>學生近期回報</strong>${p.desc}</div><div class="info-block"><strong>最新菜單</strong>${menu?`<button class="menu-preview" data-menu="${menu}">放大查看店家菜單</button>`:'尚未提供菜單連結。'}</div><div class="info-block"><strong>小問題：現在資訊正確嗎？</strong>${votes.length?`已有 ${votes.length} 位學生參與確認。`:''}<br><button class="qa-vote" data-vote="正確">正確</button> <button class="qa-vote" data-vote="需要更新">需要更新</button></div><p class="notice">資訊最後確認：${p.updated}・<button>回報資訊有誤</button></p>`;document.querySelectorAll('.qa-vote').forEach(b=>b.onclick=()=>{const all=JSON.parse(localStorage.getItem('campusGuideQA')||'[]');all.unshift({place:p.name,answer:b.dataset.vote,at:new Date().toLocaleString('zh-TW')});localStorage.setItem('campusGuideQA',JSON.stringify(all));b.parentElement.innerHTML='<strong>謝謝你的確認！</strong>你的回饋已記錄。'});document.querySelectorAll('.menu-preview').forEach(b=>b.onclick=()=>openMenu(b.dataset.menu));dialog.showModal()}document.querySelector('.close').onclick=()=>dialog.close();document.querySelector('.close-menu').onclick=()=>menuDialog.close();document.querySelectorAll('.menu-zoom').forEach(b=>b.onclick=()=>{menuScale=b.dataset.zoom==='+'?menuScale+.25:b.dataset.zoom==='-'?Math.max(.5,menuScale-.25):1;applyMenuScale()});
     function setUserLocation(lng,lat,source){window.demoCenter=[lng,lat];window.userLocation={lng,lat};try{sessionStorage.setItem('campusGuideUserLocation',JSON.stringify({lng,lat,source}))}catch(_){}map.flyTo({center:window.demoCenter,zoom:15});if(userMarker)userMarker.remove();const user=document.createElement('div');user.className='user-marker';userMarker=new maplibregl.Marker({element:user}).setLngLat(window.demoCenter).setPopup(new maplibregl.Popup({offset:12}).setText('你的目前位置')).addTo(map);document.getElementById('area').textContent=source;document.getElementById('locate').textContent='✓ 已設定位置';render()}
     function initMap(){map=new maplibregl.Map({container:'realMap',style:'https://tiles.openfreemap.org/styles/liberty',center:[120.96,23.7],zoom:6.7,attributionControl:true});map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-right');}
-    function syncMarkers(){if(!map)return;mapMarkers.forEach(m=>m.remove());mapMarkers=[];activePlaces.forEach((p,i)=>{const a=(i/places.length)*Math.PI*2;const pos=(Number.isFinite(p.lng)&&Number.isFinite(p.lat))?[p.lng,p.lat]:window.demoCenter?[window.demoCenter[0]+Math.cos(a)*.0045,window.demoCenter[1]+Math.sin(a)*.0035]:null;if(!pos)return;const el=document.createElement('button');el.className='place-marker';el.setAttribute('aria-label',p.name);el.innerHTML=`<span>${p.icon}</span>`;el.onclick=()=>showDetail(p);mapMarkers.push(new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat(pos).setPopup(new maplibregl.Popup({offset:18}).setHTML(`<strong>${p.name}</strong><br><small>${p.distance}・${Number.isFinite(p.lng)?'店家座標':'示範資料'}</small>`)).addTo(map));});document.getElementById('mapNote').textContent=mapMarkers.length?`${mapMarkers.length} 個地點・已依篩選更新`:'請定位，或在管理後台填寫店家座標';}
-    function useLocation(){const area=document.getElementById('area'),button=document.getElementById('locate');if(!window.isSecureContext){area.textContent='定位需使用安全連線（HTTPS）';return}if(!navigator.geolocation){area.textContent='此瀏覽器不支援定位，請直接點選地圖';return}button.disabled=true;button.textContent='正在定位…';area.textContent='請在 Safari 的提示中選擇「允許」';navigator.geolocation.getCurrentPosition(pos=>{button.disabled=false;setUserLocation(pos.coords.longitude,pos.coords.latitude,'已使用你的目前位置')},error=>{button.disabled=false;button.textContent='⌖ 使用目前位置';const message={1:'Safari 未獲得定位權限。請到網址列的「aA」→ 網站設定 → 位置，選擇「允許」，再重新點選。',2:'目前無法取得定位訊號。請開啟 iPhone 的「設定」→「隱私權與安全性」→「定位服務」。',3:'定位逾時，請確認 Wi‑Fi 或行動網路後再試一次。'}[error.code]||'無法取得位置，請直接點選地圖設定位置';area.textContent=message},{enableHighAccuracy:false,timeout:15000,maximumAge:300000});}document.getElementById('locate').onclick=useLocation;document.getElementById('menuToggle').onclick=()=>{const drawer=document.getElementById('drawer');drawer.hidden=!drawer.hidden};document.getElementById('feedbackForm').onsubmit=e=>{e.preventDefault();const text=document.getElementById('feedbackText').value.trim();if(!text)return;const feedback=JSON.parse(localStorage.getItem('campusGuideFeedback')||'[]');feedback.unshift({type:document.getElementById('feedbackType').value,text,createdAt:new Date().toLocaleString('zh-TW')});localStorage.setItem('campusGuideFeedback',JSON.stringify(feedback));document.getElementById('feedbackText').value='';document.getElementById('feedbackStatus').textContent='已收到你的回饋，謝謝你幫忙讓資訊更可靠。'};initMap();try{const saved=JSON.parse(sessionStorage.getItem('campusGuideUserLocation')||'null');if(Number.isFinite(saved?.lng)&&Number.isFinite(saved?.lat))setUserLocation(saved.lng,saved.lat,saved.source||'已恢復上次定位')}catch(_){}render();if(!window.userLocation)useLocation();
+    function syncMarkers(){if(!map)return;mapMarkers.forEach(m=>m.remove());mapMarkers=[];activePlaces.forEach(p=>{if(!Number.isFinite(p.lng)||!Number.isFinite(p.lat))return;const el=document.createElement('button');el.className='place-marker';el.setAttribute('aria-label',p.name);const icon=document.createElement('span');icon.textContent=p.icon||'📍';el.append(icon);el.onclick=()=>showDetail(p);mapMarkers.push(new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat([p.lng,p.lat]).setPopup(new maplibregl.Popup({offset:18}).setText(p.name)).addTo(map));});document.getElementById('mapNote').textContent=mapMarkers.length?`${mapMarkers.length} 個地點・已依篩選更新`:'尚無已設定座標的店家';}
+    function useLocation(){const area=document.getElementById('area'),button=document.getElementById('locate');if(!window.isSecureContext){area.textContent='定位需使用安全連線（HTTPS）';return}if(!navigator.geolocation){area.textContent='此瀏覽器不支援定位，請改用 Safari 或 Chrome 開啟網站';return}button.disabled=true;button.textContent='正在定位…';area.textContent='正在等待瀏覽器的位置權限…';navigator.geolocation.getCurrentPosition(pos=>{button.disabled=false;setUserLocation(pos.coords.longitude,pos.coords.latitude,'已使用你的目前位置')},error=>{button.disabled=false;button.textContent='⌖ 使用目前位置';const message={1:'位置權限遭拒或目前瀏覽器不允許定位；請檢查網站位置權限，若在 App 內建瀏覽器請改用 Safari 或 Chrome 開啟。',2:'目前無法取得定位訊號；請檢查裝置的定位服務與網路。',3:'定位逾時，請確認 Wi‑Fi 或行動網路後再試一次。'}[error.code]||'無法取得位置，請稍後重試';area.textContent=message},{enableHighAccuracy:false,timeout:15000,maximumAge:300000});}document.getElementById('locate').onclick=useLocation;document.getElementById('menuToggle').onclick=()=>{const drawer=document.getElementById('drawer');drawer.hidden=!drawer.hidden};initMap();try{const saved=JSON.parse(sessionStorage.getItem('campusGuideUserLocation')||'null');if(Number.isFinite(saved?.lng)&&Number.isFinite(saved?.lat))setUserLocation(saved.lng,saved.lat,saved.source||'已恢復上次定位')}catch(_){}render();if(!window.userLocation){try{if(sessionStorage.getItem('campusGuideLocationPrompted')!=='1'){sessionStorage.setItem('campusGuideLocationPrompted','1');useLocation()}}catch(_){useLocation()}}
   document.getElementById('exploreArea').onclick=()=>{const b=map.getBounds(),inside=p=>Number.isFinite(p.lng)&&Number.isFinite(p.lat)&&p.lng>=b.getWest()&&p.lng<=b.getEast()&&p.lat>=b.getSouth()&&p.lat<=b.getNorth();document.querySelectorAll('.place').forEach((card,i)=>card.style.display=inside(activePlaces[i])?'':'none');document.getElementById('mapNote').textContent='已探索目前地圖範圍';document.getElementById('clearArea').hidden=false};document.getElementById('clearArea').onclick=()=>{document.querySelectorAll('.place').forEach(card=>card.style.display='');document.getElementById('mapNote').textContent='尚未選擇探索區域';document.getElementById('clearArea').hidden=true};
-  document.querySelector('.map-actions').style.display='none';document.querySelector('.map-label').firstChild.textContent='附近地圖';document.getElementById('area').textContent='查看已審核店家';
+  document.querySelector('.map-actions').style.display='none';document.querySelector('.map-label').firstChild.textContent='附近地圖';if(!document.getElementById('area').textContent.trim())document.getElementById('area').textContent='查看已審核店家';
   </script><script>
   // 回饋可附上菜單圖片，讓管理者能直接核對新店家資訊。
   const feedbackForm = document.getElementById('feedbackForm');
@@ -342,7 +326,9 @@
   // 優先順序：每週特殊時段 → 舊版逐日資料（相容）→ 一般營業時段。
   const legacyStatusOf = statusOf;
   const resolvedTodaySlots = place => {
-    const hasStructuredHours = Array.isArray(place.days) || Array.isArray(place.periods) || Array.isArray(place.weeklySchedules) || Boolean(place.weeklyHours);
+    const specialToday = todaySpecial(place);
+    if (specialToday) return specialToday.closed ? [] : [{open:specialToday.open,close:specialToday.close}];
+    const hasStructuredHours = (place.periods || []).length || (place.weeklySchedules || []).length || Boolean(place.weeklyHours);
     if (!hasStructuredHours) return null;
     const day = new Date().getDay();
     const special = (place.weeklySchedules || [])
@@ -360,18 +346,22 @@
     return place.days?.includes(day) ? (place.periods || []).filter(slot => slot.open || slot.close) : [];
   };
   const todayHoursLabel = place => {
+    const specialToday = todaySpecial(place);
+    if (specialToday) return specialToday.closed ? '今日特別休息' : `${specialToday.open}–${specialToday.close}`;
     const slots = resolvedTodaySlots(place);
     return slots === null ? (place.hours || '時間待確認') : slots.length ? slotsText(slots) : '今日休息';
   };
   statusOf = function (place) {
     const now = new Date(), minutes = now.getHours() * 60 + now.getMinutes();
     const slots = resolvedTodaySlots(place);
-    if (slots === null) return legacyStatusOf(place);
-    if (!slots.length) return '今日休息';
-    return slots.some(slot => {
+    const specialToday = todaySpecial(place);
+    if (slots === null) return '時間待確認';
+    if (!slots.length) return specialToday ? '今日特別休息' : '今日休息';
+    const openNow=slots.some(slot => {
       const open = minutesOf(slot.open), close = minutesOf(slot.close);
       return Number.isFinite(open) && Number.isFinite(close) && minutes >= open && minutes < close;
-    }) ? '營業中' : '休息中';
+    });
+    return specialToday ? (openNow ? '營業中（今日調整）' : '休息中（今日調整）') : (openNow ? '營業中' : '休息中');
   };
   const renderWithTodayHours = render;
   render = function () {
@@ -394,10 +384,11 @@
     document.querySelectorAll('.detail').forEach((button, index) => {
       const place = activePlaces[index];
       if (!place) return;
-      button.textContent = '查看近期資訊與菜單 →';
+       button.textContent = '查看近期資訊與菜單';
       button.onclick = () => { location.href = `place.html?name=${encodeURIComponent(place.name)}&v=menu-20260918`; };
     });
   };
+  showDetail = place => { if(place) location.href=`place.html?name=${encodeURIComponent(place.name)}`; };
   render();
   </script>
   <!-- 正式前台只讀取 Supabase；公開 JSON 不再參與資料載入。 -->
@@ -413,10 +404,8 @@
   if (backend?.enabled) {
     try {
       const remotePlaces = await backend.getPlaces();
-      if (remotePlaces.length) {
-        places.splice(0, places.length, ...remotePlaces);
-        render();
-      }
+       places.splice(0, places.length, ...remotePlaces);
+       render();
       const form = document.getElementById('feedbackForm');
       form.onsubmit = async event => {
         event.preventDefault();
@@ -432,10 +421,10 @@
           form.reset(); status.textContent = '已收到你的回饋，謝謝你幫忙讓資訊更可靠。';
         } catch (_) { status.textContent = '目前無法送出，請稍後再試。'; }
       };
-    } catch (_) {
-      // 雲端尚未完成初始化時，繼續使用已發布快照，網站仍可瀏覽。
+    } catch (error) {
+      document.getElementById('resultLine').textContent=`雲端店家資料暫時無法讀取：${error.message||'請稍後重新整理。'}`;
     }
-  }
+  } else document.getElementById('resultLine').textContent='雲端店家服務尚未就緒，請稍後重新整理。';
   </script>
   <script>
     // 選單只留下真正需要離開首頁時才會用到的回饋入口。
@@ -450,7 +439,7 @@
   const backend = window.CampusBackend;
   if (backend?.enabled) {
   const loginButton = document.createElement('button');
-  loginButton.className = 'location';
+  loginButton.className = 'location auth-button';
   loginButton.type = 'button';
   const navRight = document.querySelector('.nav-right');
   const refreshLogin = async () => {
@@ -473,7 +462,7 @@
     let confirmationByName = new Map();
     try {
       const rows = await backend.getConfirmations(places.map(place => place.name));
-      confirmationByName = new Map(rows.map(row => [row.place_name, row]));
+       confirmationByName = new Map(rows.reverse().map(row => [row.place_name, row]));
     } catch (_) { /* SQL 尚未套用時仍可正常查店 */ }
     const formatTime = value => value ? new Intl.DateTimeFormat('zh-TW', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : '';
     const decorate = () => document.querySelectorAll('.place').forEach(card => {
@@ -506,4 +495,3 @@
 </script>
 </body>
 </html>
-

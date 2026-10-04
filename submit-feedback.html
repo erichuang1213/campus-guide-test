@@ -39,7 +39,8 @@
     const wait=async()=>{for(let i=0;i<50&&!window.CampusBackend;i++)await new Promise(r=>setTimeout(r,50));return window.CampusBackend};
     const backend=await wait(),form=document.getElementById('feedbackForm'),status=document.getElementById('status'),submit=document.getElementById('submit');
     const placeName=new URLSearchParams(location.search).get('place');
-    const session=await backend?.session();
+    let session=null;
+    try{session=await backend?.session()}catch(_){/* 仍可匿名送出，實際儲存結果以送出回應為準。 */}
     if(session)status.textContent=`已登入：${session.user.user_metadata?.full_name||session.user.email}。這次回饋會顯示給管理者。`;
     else status.textContent='目前以匿名方式回饋；登入後可讓管理者辨識你的回報。';
     const read=file=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)});
@@ -51,8 +52,8 @@
       submit.disabled=true;status.textContent='正在送出回饋…';
       try{
         const entry={type:document.getElementById('feedbackType').value,text:body,placeName,menuImage:file?await read(file):'',menuFileName:file?.name||''};
-        if(backend?.enabled)await backend.submitFeedback(entry);
-        else{const local=JSON.parse(localStorage.getItem('campusGuideFeedback')||'[]');local.unshift({...entry,createdAt:new Date().toLocaleString('zh-TW')});localStorage.setItem('campusGuideFeedback',JSON.stringify(local))}
+        if(!backend?.enabled)throw new Error('雲端回饋服務尚未就緒，請稍後重試。');
+        await backend.submitFeedback(entry);
         form.reset();updateFeedbackType(document.getElementById('feedbackType'));status.textContent='已收到你的回饋，謝謝你幫忙讓資訊更可靠。';
       }catch(error){status.textContent=`目前無法送出：${error.message||'請稍後再試。'}`}finally{submit.disabled=false}
     };
@@ -62,4 +63,3 @@
     }
   </script>
 </body></html>
-

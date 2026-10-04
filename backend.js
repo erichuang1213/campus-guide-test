@@ -85,6 +85,16 @@ if (!config?.url || !config?.anonKey) {
       const rows = result(await client.from('pending_candidates').select('id, data').order('created_at', { ascending: true }));
       return (rows || []).map(row => ({ ...row.data, id: row.id }));
     },
+    async saveCandidates(candidates) {
+      if (!candidates.length) return [];
+      const rows = candidates.map(item => ({
+        id: item.id || crypto.randomUUID(),
+        source_key: item.sourceKey,
+        name: item.name,
+        data: item
+      }));
+      return result(await client.from('pending_candidates').upsert(rows, { onConflict: 'source_key', ignoreDuplicates: true }).select('id, data'));
+    },
     async removeCandidate(id) {
       result(await client.from('pending_candidates').delete().eq('id', id));
     },
@@ -108,8 +118,6 @@ if (!config?.url || !config?.anonKey) {
       result(await client.from('site_settings').upsert({ id: 1, custom_tags: customTags }, { onConflict: 'id' }));
     },
     async submitFeedback(feedback) {
-      const session = await this.session();
-      const user = session?.user;
       result(await client.from('feedback').insert({
         type: feedback.type,
         message: feedback.text,

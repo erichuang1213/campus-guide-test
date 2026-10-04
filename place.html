@@ -185,16 +185,16 @@
         valid = (v) =>
           /^data:image\//.test(v || "") || /^https?:\/\//.test(v || "");
       const open = (p) => {
-        const n = new Date(),
-          day = n.getDay(),
-          now = n.getHours() * 60 + n.getMinutes(),
-          slots = p.days?.includes(day) ? p.periods || [] : [];
-        return slots.some((x) => {
-          const m = (t) => t.split(":").reduce((a, b) => a * 60 + Number(b), 0);
-          return now >= m(x.open) && now < m(x.close);
-        })
-          ? "營業中"
-          : "今日休息";
+        const now = new Date(), day = now.getDay(), minutes = now.getHours() * 60 + now.getMinutes();
+        const special = (p.specialHours || []).find(item => item.date === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`);
+        if (special?.closed) return '今日特別休息';
+        const overrides = (p.weeklySchedules || []).filter(rule => rule.days?.includes(day)).flatMap(rule => rule.periods || []);
+        const known = (p.periods || []).length || (p.weeklySchedules || []).length || Boolean(p.weeklyHours);
+        if (!special && !known) return '時間待確認';
+        const slots = special ? [{open:special.open,close:special.close}] : overrides.length ? overrides : p.weeklyHours ? (p.weeklyHours[day]?.enabled ? p.weeklyHours[day].periods || [] : []) : p.days?.includes(day) ? p.periods || [] : [];
+        if (!slots.length) return known ? '今日休息' : '時間待確認';
+        const at = value => /^\d{1,2}:\d{2}$/.test(value || '') ? Number(value.slice(0,2))*60 + Number(value.slice(-2)) : NaN;
+        return slots.some(slot => minutes >= at(slot.open) && minutes < at(slot.close)) ? '營業中' : '休息中';
       };
       const draw = (p) => {
         if (!p) {
@@ -208,15 +208,16 @@
           p.menu,
         ].map(url => valid(url) ? url : '').filter(Boolean))];
         const image = images[0];
-        const menu = text
-          ? `<section class="section"><h2>店家菜單</h2><div class="text-menu">${escape(text)}</div><p class="empty" style="margin-top:10px;font-size:13px">菜單由管理者整理，出發前建議再次確認。</p></section>`
-          : image
-            ? `<section class="section"><h2>店家菜單</h2><p class="empty" style="margin-top:-8px">共 ${images.length} 張菜單圖片，點選下方頁碼切換。</p><div class="menu-pages">${images.map((_, i) => `<button class="${i === 0 ? 'active' : ''}" data-menu-page="${i}">第 ${i + 1} 張</button>`).join('')}</div><div class="tools"><button data-z="-">縮小</button><button data-z="0">適合閱讀區</button><button data-z="+">放大</button></div><div class="frame"><img id="menuImage" src="${image}" alt="${escape(p.name)} 的菜單，第 1 張"></div></section>`
-            : '<section class="section"><h2>店家菜單</h2><p class="empty">店家尚未提供菜單。</p></section>';
+        const menu = image
+          ? `<section class="section"><h2>店家菜單</h2><p class="empty" style="margin-top:-8px">共 ${images.length} 張菜單圖片，點選下方頁碼切換。</p><div class="menu-pages">${images.map((_, i) => `<button class="${i === 0 ? 'active' : ''}" data-menu-page="${i}">第 ${i + 1} 張</button>`).join('')}</div><div class="tools"><button data-z="-">縮小</button><button data-z="0">適合閱讀區</button><button data-z="+">放大</button></div><div class="frame"><img id="menuImage" src="${escape(image)}" alt="${escape(p.name)} 的菜單，第 1 張"></div><p class="empty" id="menuError" hidden>這張菜單暫時無法載入，請聯絡管理者檢查圖片網址。</p>${text?`<div class="text-menu">${escape(text)}</div>`:''}</section>`
+          : text ? `<section class="section"><h2>店家菜單</h2><div class="text-menu">${escape(text)}</div><p class="empty" style="margin-top:10px;font-size:13px">菜單由管理者整理，出發前建議再次確認。</p></section>`
+          : '<section class="section"><h2>店家菜單</h2><p class="empty">店家尚未提供菜單。</p></section>';
         app.innerHTML = `<a class="back" href="index.html">← 返回找店</a><div class="head"><div><h1>${escape(p.name)}</h1><p class="meta">${escape(p.hours || "營業時間待確認")}・${escape(p.price || "價位待確認")}</p></div><span class="state">${open(p)}</span></div><div class="tags">${(p.tags || []).map((x) => `<span class="tag">${escape(x)}</span>`).join("")}</div><section class="section"><h2>近期資訊</h2><p>${escape(p.desc || "尚未補充學生提醒。")}</p></section>${menu}<section class="section"><h2>資訊更新</h2><p>若資訊有誤，歡迎到 <a href="submit-feedback.html?place=${encodeURIComponent(p.name)}">回報這間店的狀況</a> 告訴我們。</p></section>`;
-        if (image && !text) {
+        if (image) {
           let z = 1,
             img = document.getElementById("menuImage");
+          img.onerror = () => { document.getElementById('menuError').hidden = false; };
+          img.onload = () => { document.getElementById('menuError').hidden = true; };
           document.querySelectorAll("[data-menu-page]").forEach((button) => (button.onclick = () => {
             document.querySelectorAll("[data-menu-page]").forEach((item) => item.classList.toggle("active", item === button));
             img.src = images[Number(button.dataset.menuPage)];
@@ -241,12 +242,15 @@
       let places = [];
       for (let i = 0; i < 50 && !window.CampusBackend; i++)
         await new Promise((r) => setTimeout(r, 50));
+      let loadError = '';
       try {
         const cloud = await window.CampusBackend?.getPlaces();
         if (cloud?.length) places = cloud;
-      } catch (_) {}
-      draw(places.find((p) => p.name === name));
+      } catch (error) { loadError = error.message || '請稍後再試。'; }
+      if (loadError) app.innerHTML = `<p class="loading">店家資訊暫時無法載入：${escape(loadError)}</p>`;
+      else if (!window.CampusBackend?.enabled) app.innerHTML = '<p class="loading">雲端資料服務尚未就緒，請稍後再試。</p>';
+      else if (places.length) draw(places.find((p) => p.name === name));
+      else app.innerHTML = '<p class="loading">目前沒有公開店家資料，請稍後再試。</p>';
     </script>
   </body>
 </html>
-

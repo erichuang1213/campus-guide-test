@@ -21,7 +21,7 @@
     const stateClass=status=>status==='已完成'?'done':status==='處理中'?'working':'pending';
     const showLogin=note=>{
       main.innerHTML=`<section class="head"><h1>回饋管理登入</h1><p>${esc(note||'請使用管理員帳號登入。')}</p></section><form class="login" id="login"><input id="email" type="email" placeholder="電子信箱" required><input id="password" type="password" placeholder="密碼" minlength="6" required><button>登入</button><small id="loginStatus"></small></form>`;
-      document.getElementById('login').onsubmit=async event=>{event.preventDefault();const status=document.getElementById('loginStatus');try{await backend.signIn(email.value,password.value);if(!await backend.isAdmin())throw Error('此帳號沒有管理權限。');location.reload()}catch(error){status.textContent=error.message||'無法登入。'}};
+      document.getElementById('login').onsubmit=async event=>{event.preventDefault();const status=document.getElementById('loginStatus');try{await backend.signIn(document.getElementById('email').value,document.getElementById('password').value);if(!await backend.isAdmin())throw Error('此帳號沒有管理權限。');location.reload()}catch(error){status.textContent=error.message||'無法登入。'}};
     };
     const start=async()=>{
       const list=document.getElementById('list'),count=document.getElementById('count');
@@ -40,4 +40,3 @@
   </script>
 </body>
 </html>
-

@@ -104,8 +104,6 @@ for select to anon, authenticated using (true);
 drop policy if exists "signed in users confirm places" on public.place_confirmations;
 create policy "signed in users confirm places" on public.place_confirmations
 for insert to authenticated with check (auth.uid() = user_id);
-+
-
 -- 待審核店家與菜單檔案空間：完整定義請見 migrations/20260920_p0_cloud_contract.sql。
 create table if not exists public.pending_candidates (
   id uuid primary key default gen_random_uuid(),
@@ -135,4 +133,3 @@ drop policy if exists "admins update menu images" on storage.objects;
 create policy "admins update menu images" on storage.objects for update to authenticated using (bucket_id = 'menu-images' and exists (select 1 from public.admins where user_id = auth.uid())) with check (bucket_id = 'menu-images' and exists (select 1 from public.admins where user_id = auth.uid()));
 drop policy if exists "admins delete menu images" on storage.objects;
 create policy "admins delete menu images" on storage.objects for delete to authenticated using (bucket_id = 'menu-images' and exists (select 1 from public.admins where user_id = auth.uid()));
-
