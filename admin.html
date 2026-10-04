@@ -190,7 +190,6 @@ edit = index => { editWithTextMenu(index); document.getElementById('menuText').v
 </script><script>
 // 此階段不維護菜單，保留舊資料但從管理介面移除。
 document.getElementById('menuText').closest('label').style.display = 'none';
-document.querySelector('.intro p').textContent = '新增店家、標籤、營業資訊與地圖座標。這些設定只儲存在目前瀏覽器，適合先做內容驗證；正式上線時再改接資料庫與帳號權限。';
 </script><script>
 // 指定日期可覆蓋每週固定時段，例如今天臨時休息、明天晚開。
 let specialHours = [];
